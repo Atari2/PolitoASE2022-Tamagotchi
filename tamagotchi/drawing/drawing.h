@@ -23,4 +23,7 @@ struct DrawInstruction {
 
 void draw_instructions(const DrawInstruction* insns, uint32_t size);
 void draw_image(int width, int height, const uint16_t* image_data);
-void draw_rect(Coords origin, int width, int height, int border_thickness, uint16_t color, uint16_t* bg_color);
+void draw_rect(Coords origin, int width, int height, int border_thickness, uint16_t color, const uint16_t* bg_color);
+void center_rect_in_rect(Coords* origin, uint32_t width, uint32_t height, uint32_t o_width, uint32_t o_height);
+void center_text_in_rect(Coords* origin, uint32_t width, uint32_t height, uint32_t text_len);
+void draw_text(int x, int y, const char* text, uint16_t color);
