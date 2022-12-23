@@ -16,7 +16,7 @@ void set_timer_frequency(uint32_t frequency) {
 	g_frequency = frequency;
 }
 
-uint32_t calc_count_from_ms(float millis) {
+static uint32_t calc_count_from_ms(float millis) {
 	float seconds = millis / 1000.0f;
 	float count = seconds * g_frequency;
 	return (uint32_t)count;

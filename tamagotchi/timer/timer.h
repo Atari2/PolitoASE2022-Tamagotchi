@@ -15,7 +15,6 @@
 #define ms *1.0f
 #define MHz *1u
 #define SCALE(x) (x-1)
-#define LAB10
 
 enum TimerNo {
 	Timer0 = 0,

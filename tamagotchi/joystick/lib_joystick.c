@@ -17,10 +17,10 @@
 
 void joystick_init(void) {
 	/* joystick Select functionality */
-/*  LPC_PINCON->PINSEL3 &= ~(3<<18);	//PIN mode GPIO (00b value per P1.25)
-	LPC_GPIO1->FIODIR   &= ~(1<<25);	//P1.25 Input (joysticks on PORT1 defined as Input) 
-*/
-	/* joystick Down functionality */
-  LPC_PINCON->PINSEL3 &= ~(3<<20);	//PIN mode GPIO (00b value per P1.26)
-	LPC_GPIO1->FIODIR   &= ~(1<<26);	//P1.26 Input (joysticks on PORT1 defined as Input) 
+	
+	const uint32_t joystick_functionality = (3 << 18) | (3 << 22) | (3 << 24);
+	const uint32_t joystick_fiodir = (1 << 25) | (1 << 27) | (1 << 28);
+	
+  LPC_PINCON->PINSEL3 &= ~joystick_functionality;	//PIN mode GPIO (00b value per P1.25)
+	LPC_GPIO1->FIODIR   &= ~joystick_fiodir;	//P1.25 Input (joysticks on PORT1 defined as Input) 
 }

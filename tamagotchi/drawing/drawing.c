@@ -1,21 +1,8 @@
 #include "LPC17xx.h"
-#include "../GLCD/GLCD.h" 
-#include "drawing.h"
-#include "../GLCD/AsciiLib.h"
 #include <string.h>
-
-void draw_instructions(const DrawInstruction* insns, uint32_t size) {
-	DrawInstruction curr_insn;
-	uint32_t i;
-	for (i = 0; i < size; ++i) {
-		curr_insn = insns[i];
-		if (curr_insn.type == Point) {
-			LCD_SetPoint(curr_insn.from.x, curr_insn.from.y, Black);
-		} else if (curr_insn.type == Line) {
-			LCD_DrawLine(curr_insn.from.x, curr_insn.from.y, curr_insn.to.x, curr_insn.to.y, Black);
-		}
-	}
-}
+#include "../GLCD/GLCD.h" 
+#include "../GLCD/AsciiLib.h"
+#include "drawing.h"
 
 #define PX_RT 5
 
@@ -26,6 +13,25 @@ void draw_color_at(int x, int y, uint16_t color) {
 	int i;
 	for (i = 0; i < PX_RT; ++i) {
 		LCD_DrawLine(real_x, real_y + i, real_x + PX_RT, real_y + i, color);
+	}
+}
+
+void draw_image_diff(int width, int height, const uint16_t* on_screen, const uint16_t* to_draw) {
+	Coords center = {0, 0};
+	int i, j;
+	uint16_t val = 0;
+	if (on_screen == NULL) {
+		draw_image(width, height, to_draw);
+		return;
+	}
+	center_rect_in_rect(&center, LCD_WIDTH / PX_RT, LCD_HEIGHT / PX_RT, width, height);
+	for (i = 0; i < height; ++i) {
+		for (j = 0; j < width; ++j) {
+			val = to_draw[i*width+j];
+			if (on_screen[i*width+j] == val)
+				continue;
+			draw_color_at(center.x + j, center.y + i, val);
+		}
 	}
 }
 
@@ -62,36 +68,54 @@ void draw_rect(Coords origin, int width, int height, int border_thickness, uint1
 
 }
 
-void draw_char_expanded(uint16_t x, uint16_t y, char c, uint16_t charColor) {
+#define FONT_WIDTH 8
+#define FONT_HEIGHT 16
+
+void draw_char_expanded(uint16_t x, uint16_t y, char c, uint16_t charColor, uint8_t scale) {
+	uint16_t i, j, k;
+	uint8_t buffer[16], tmp_char;
+	GetASCIICode(buffer,c);
+	for(i=0; i<FONT_HEIGHT*scale; i += scale) {
+		tmp_char = buffer[i / scale];
+		for(j=0; j<FONT_WIDTH*scale; j += scale) {
+			if(((tmp_char >> ((FONT_WIDTH-1) - (j / scale))) & 0x01) == 0x01) {
+				for (k = 0; k < scale; ++k) {
+					LCD_DrawLine(x + j, y + i + k, x  + j + scale, y + i + k, charColor);
+				}
+			}
+		}
+	}
+}
+void draw_char(uint16_t x, uint16_t y, char c, uint16_t charColor) {
 	uint16_t i, j;
 	uint8_t buffer[16], tmp_char;
 	GetASCIICode(buffer,c);
-	for(i=0; i<32; i += 2) {
-		tmp_char = buffer[i / 2];
-		for(j=0; j<16; j+=2) {
-			if(((tmp_char >> (7 - (j / 2))) & 0x01) == 0x01) {
+	for(i=0; i<FONT_HEIGHT; i++) {
+		tmp_char = buffer[i];
+		for(j=0; j<FONT_WIDTH; j++) {
+			if(((tmp_char >> ((FONT_WIDTH-1) - j)) & 0x01) == 0x01) {
 				LCD_SetPoint(x + j, y + i, charColor);
-				LCD_SetPoint(x + j + 1, y + i, charColor);
-				LCD_SetPoint(x + j, y + i + 1, charColor);
-				LCD_SetPoint(x + j + 1, y + i + 1, charColor);
 			}
 		}
 	}
 }
 
-#define FONT_WIDTH 16
-#define FONT_HEIGHT 32
-
-void draw_text(int x, int y, const char* text, uint16_t color) {
+void draw_text(int x, int y, const char* text, uint16_t color, uint8_t scale) {
 	char TempChar;
+	const uint16_t fw = FONT_WIDTH * scale;
+	const uint16_t fh = FONT_HEIGHT * scale;
 	do {
-		TempChar = *text++;  
-		draw_char_expanded(x, y, TempChar, color);    
-		if(x < MAX_X - FONT_WIDTH) {
-			x += FONT_WIDTH;
-		} else if (y < MAX_Y - FONT_HEIGHT) {
+		TempChar = *text++;
+		if (scale == 1) {
+			draw_char(x, y, TempChar, color);
+		} else {
+			draw_char_expanded(x, y, TempChar, color, scale);    
+		}
+		if(x < MAX_X - fw) {
+			x += fw;
+		} else if (y < MAX_Y - fh) {
 			x = 0;
-			y += FONT_HEIGHT;
+			y += fh;
 		} else {
 			x = 0;
 			y = 0;
@@ -104,9 +128,50 @@ void center_rect_in_rect(Coords* origin, uint32_t width, uint32_t height, uint32
 	origin->y = origin->y + (height / 2) - (o_height / 2);
 }
 
-void center_text_in_rect(Coords* origin, uint32_t width, uint32_t height, uint32_t text_len) {
-	const uint32_t pixel_text_width = (text_len * FONT_WIDTH);
-	const uint32_t pixel_text_height = FONT_HEIGHT;
+void center_text_in_rect(Coords* origin, uint32_t width, uint32_t height, uint32_t text_len, uint8_t text_scale) {
+	const uint32_t pixel_text_width = (text_len * (text_scale* FONT_WIDTH));
+	const uint32_t pixel_text_height = (text_scale *FONT_HEIGHT);
 	
 	center_rect_in_rect(origin, width, height, pixel_text_width, pixel_text_height);
+}
+
+void draw_batteries(uint8_t tot_bars, uint8_t full_bars) {
+	const uint16_t bt_width = 60;
+	const uint16_t bt_height = 20;
+	Coords origin = {0, 0};
+	origin.x = 0;
+	origin.y = 60;
+	center_rect_in_rect(&origin, 120, 40, bt_width, bt_height);
+	draw_rect(origin, bt_width, bt_height, 2, 0x618C, NULL);
+	LCD_DrawLine(origin.x + 60 + 2, origin.y + 4, origin.x + 60 + 2, origin.y + 16, 0x618C);
+	LCD_DrawLine(origin.x + 60 + 3, origin.y + 4, origin.x + 60 + 3, origin.y + 16, 0x618C);
+	draw_battery_bars(origin, tot_bars, full_bars);
+	
+	origin.x = 120;
+	origin.y = 60;
+	center_rect_in_rect(&origin, 120, 40, bt_width, bt_height);
+	draw_rect(origin, bt_width, bt_height, 2, 0x618C, NULL);
+	LCD_DrawLine(origin.x + 60 + 2, origin.y + 4, origin.x + 60 + 2, origin.y + 16, 0x618C);
+	LCD_DrawLine(origin.x + 60 + 3, origin.y + 4, origin.x + 60 + 3, origin.y + 16, 0x618C);
+	draw_battery_bars(origin, tot_bars, full_bars);
+}
+
+void draw_battery_bars(Coords origin, uint8_t tot_bars, uint8_t full_bars) {
+	uint8_t i = 0;
+	const uint8_t bar_height = 14;
+	const uint8_t bar_width = 5;
+	const uint8_t spacing = 2;
+	const uint16_t bgColorFull = Black;
+	const uint16_t bgColorEmpty = White;
+	Coords coords = {0, 0};
+	coords.x = origin.x + spacing + 1;
+	coords.y = origin.y + 3;
+	for (i = 0; i < full_bars; ++i) {
+		draw_rect(coords, bar_width, bar_height, 1, Black, &bgColorFull);
+		coords.x += bar_width + spacing;
+	}
+	for (i = 0; i < tot_bars - full_bars; ++i) {
+		draw_rect(coords, bar_width, bar_height, 1, White, &bgColorEmpty);
+		coords.x += bar_width + spacing;
+	}
 }

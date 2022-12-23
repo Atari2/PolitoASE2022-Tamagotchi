@@ -11,12 +11,12 @@ def make_rgb_555(r, g, b):
     b = ((b & 0xFF) >> 3)
     return f'0x{((r << 11) | (g << 5) | b):04X}'
 
-with open('extraPoint1/images/imagedata.h', 'w') as h:
+with open('tamagotchi/images/imagedata.h', 'w') as h:
     h.write('#include <stdint.h>\n')
     for filename in glob.glob('images/*.jpg'):
         basename, _ = os.path.splitext(filename)
         basename = os.path.split(basename)[-1]
-        with open(f'extraPoint1/images/{basename}.c', 'w') as f:
+        with open(f'tamagotchi/images/{basename}.c', 'w') as f:
             f.write('#include <stdint.h>\n')
             with Image.open(filename) as im:
                 w, z = im.size

@@ -8,5 +8,9 @@
 **--------------------------------------------------------------------------------------------------------       
 *********************************************************************************************************/
 
+#define JOYSTICK_SELECT (LPC_GPIO1->FIOPIN & (1<<25)) == 0
+#define JOYSTICK_LEFT (LPC_GPIO1->FIOPIN & (1<<27)) == 0
+#define JOYSTICK_RIGHT (LPC_GPIO1->FIOPIN & (1<<28)) == 0
+
 /* lib_joystick */
 void joystick_init(void);
