@@ -325,7 +325,7 @@
             <wLevel>2</wLevel>
             <uThumb>0</uThumb>
             <uSurpInc>0</uSurpInc>
-            <uC99>0</uC99>
+            <uC99>1</uC99>
             <uGnu>0</uGnu>
             <useXO>0</useXO>
             <v6Lang>3</v6Lang>
@@ -514,14 +514,54 @@
               <FilePath>.\images\imagedata.h</FilePath>
             </File>
             <File>
-              <FileName>mario2.c</FileName>
+              <FileName>idle.c</FileName>
               <FileType>1</FileType>
-              <FilePath>.\images\mario2.c</FilePath>
+              <FilePath>.\images\idle.c</FilePath>
             </File>
             <File>
-              <FileName>mario1.c</FileName>
+              <FileName>idle_2.c</FileName>
               <FileType>1</FileType>
-              <FilePath>.\images\mario1.c</FilePath>
+              <FilePath>.\images\idle_2.c</FilePath>
+            </File>
+            <File>
+              <FileName>running1.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\images\running1.c</FilePath>
+            </File>
+            <File>
+              <FileName>running2.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\images\running2.c</FilePath>
+            </File>
+            <File>
+              <FileName>running5.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\images\running5.c</FilePath>
+            </File>
+            <File>
+              <FileName>running6.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\images\running6.c</FilePath>
+            </File>
+            <File>
+              <FileName>eating.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\images\eating.c</FilePath>
+            </File>
+            <File>
+              <FileName>crouched.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\images\crouched.c</FilePath>
+            </File>
+            <File>
+              <FileName>pizza.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\images\pizza.c</FilePath>
+            </File>
+            <File>
+              <FileName>donut.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\images\donut.c</FilePath>
             </File>
           </Files>
         </Group>

@@ -12,6 +12,7 @@
 #include "../joystick/joystick.h"
 #include "../drawing/drawing.h"
 #include "../GLCD/GLCD.h"
+#include "../timer/timer.h"
 #include <stdlib.h>
 /******************************************************************************
 ** Function name:		RIT_IRQHandler
@@ -25,10 +26,17 @@
 
 extern volatile _Bool start_food_animation;
 extern volatile _Bool start_snack_animation;
+extern volatile enum PlayerState player_state; 
+extern volatile _Bool reset_clicked;
+
+static uint8_t selected = 0;
+
+void reset_global_rit_state(void) {
+	selected = 0;
+}
 
 void RIT_IRQHandler (void)
 {			
-	static uint8_t selected = 0;		// 0: nothing selected, 1: meal, 2 snack
 	Coords origin = {0, 0};
 	origin.x = 0;
 	origin.y =	LCD_HEIGHT - 60 - 1;
@@ -38,6 +46,14 @@ void RIT_IRQHandler (void)
 		return;
 
 	if (JOYSTICK_SELECT) {
+		if (player_state == Stopped) {
+			// reset was clicked
+			reset_clicked = 1;
+			disable_RIT();
+			disable_timer(Timer0);
+			disable_timer(Timer1);
+			return;
+		}
 		switch (selected) {
 			case 0:
 				// select was pressed but nothing was selected
@@ -54,12 +70,12 @@ void RIT_IRQHandler (void)
 				// how did we even end up here?
 				break;
 		}
-	} else if (JOYSTICK_LEFT) {
+	} else if (JOYSTICK_LEFT && player_state == Idle) {
 		draw_rect(origin, 120, 60, 2, Red, NULL); 
 		origin.x += 120;
 		draw_rect(origin, 120, 60, 2, Black, NULL); 
 		selected = 1;
-	} else if (JOYSTICK_RIGHT) {
+	} else if (JOYSTICK_RIGHT && player_state == Idle) {
 		draw_rect(origin, 120, 60, 2, Black, NULL); 
 		origin.x += 120;
 		draw_rect(origin, 120, 60, 2, Red, NULL); 

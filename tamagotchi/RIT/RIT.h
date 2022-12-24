@@ -17,6 +17,7 @@ extern void enable_RIT( void );
 extern void disable_RIT( void );
 extern void reset_RIT( void );
 extern void set_rit_frequency(uint32_t frequency);
+extern void reset_global_rit_state(void);
 /* IRQ_RIT.c */
 extern void RIT_IRQHandler (void);
 

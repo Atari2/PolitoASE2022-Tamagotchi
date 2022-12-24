@@ -4,46 +4,74 @@
 #include "../GLCD/AsciiLib.h"
 #include "drawing.h"
 
-#define PX_RT 5
+volatile _Bool drawing = 0;
 
 void draw_color_at(int x, int y, uint16_t color) {
 	// map a single pixel to a 5x5 area
 	int real_x = x * PX_RT;
 	int real_y = y * PX_RT;
 	int i;
+	if (real_x < 0 || real_x > MAX_X || real_y < 0 || real_y > MAX_Y)
+		return;
 	for (i = 0; i < PX_RT; ++i) {
 		LCD_DrawLine(real_x, real_y + i, real_x + PX_RT, real_y + i, color);
 	}
 }
 
-void draw_image_diff(int width, int height, const uint16_t* on_screen, const uint16_t* to_draw) {
+void draw_image_noscale(Coords origin, int width, int height, const uint16_t* image_data) {
+	int i, j;
+	drawing = 1;
+	for (i = 0; i < height; ++i) {
+		for (j = 0; j < width; ++j) {
+			if (LCD_GetPoint(origin.x + j, origin.y + i) >= 0xFBFF) {
+				LCD_SetPoint(origin.x + j, origin.y + i, image_data[i*width+j]);
+			}
+		}
+	}
+	drawing = 0;
+}
+
+void draw_image_diff(Coords origin, int width, int height, const uint16_t* on_screen, const uint16_t* to_draw) {
 	Coords center = {0, 0};
 	int i, j;
 	uint16_t val = 0;
 	if (on_screen == NULL) {
-		draw_image(width, height, to_draw);
+		draw_image(origin, width, height, to_draw);
 		return;
 	}
+	drawing = 1;
 	center_rect_in_rect(&center, LCD_WIDTH / PX_RT, LCD_HEIGHT / PX_RT, width, height);
 	for (i = 0; i < height; ++i) {
 		for (j = 0; j < width; ++j) {
 			val = to_draw[i*width+j];
 			if (on_screen[i*width+j] == val)
 				continue;
-			draw_color_at(center.x + j, center.y + i, val);
+			draw_color_at(origin.x + j, origin.y + i, val);
 		}
 	}
+	drawing = 0;
 }
 
-void draw_image(int width, int height, const uint16_t* image_data) {
-	Coords center = {0, 0};
+void draw_image(Coords origin, int width, int height, const uint16_t* image_data) {
 	int i, j;
-	center_rect_in_rect(&center, LCD_WIDTH / PX_RT, LCD_HEIGHT / PX_RT, width, height);
+	drawing = 1;
 	for (i = 0; i < height; ++i) {
 		for (j = 0; j < width; ++j) {
-			draw_color_at(center.x + j, center.y + i, image_data[i*width+j]);
+			draw_color_at(origin.x + j, origin.y + i, image_data[i*width+j]);
 		}
 	}
+	drawing = 0;
+}
+
+void draw_image_flipped(Coords origin, int width, int height, const uint16_t* image_data) {
+	int i, j;
+	drawing = 1;
+	for (i = 0; i < height; ++i) {
+		for (j = width - 1; j >= 0; --j) {
+			draw_color_at(origin.x + (width - 1) - j, origin.y + i, image_data[i*width+j]);
+		}
+	}
+	drawing = 0;
 }
 
 void draw_rect(Coords origin, int width, int height, int border_thickness, uint16_t color, const uint16_t* bg_color) {
@@ -123,19 +151,19 @@ void draw_text(int x, int y, const char* text, uint16_t color, uint8_t scale) {
 	} while (*text != 0);
 }
 
-void center_rect_in_rect(Coords* origin, uint32_t width, uint32_t height, uint32_t o_width, uint32_t o_height) {
+void center_rect_in_rect(Coords* origin, int32_t width, int32_t height, int32_t o_width, int32_t o_height) {
 	origin->x = origin->x + (width / 2) - (o_width / 2);
 	origin->y = origin->y + (height / 2) - (o_height / 2);
 }
 
-void center_text_in_rect(Coords* origin, uint32_t width, uint32_t height, uint32_t text_len, uint8_t text_scale) {
+void center_text_in_rect(Coords* origin, int32_t width, int32_t height, uint32_t text_len, uint8_t text_scale) {
 	const uint32_t pixel_text_width = (text_len * (text_scale* FONT_WIDTH));
 	const uint32_t pixel_text_height = (text_scale *FONT_HEIGHT);
 	
 	center_rect_in_rect(origin, width, height, pixel_text_width, pixel_text_height);
 }
 
-void draw_batteries(uint8_t tot_bars, uint8_t full_bars) {
+void draw_batteries(uint8_t tot_bars, uint8_t full_bars_happ, uint8_t full_bars_sat) {
 	const uint16_t bt_width = 60;
 	const uint16_t bt_height = 20;
 	Coords origin = {0, 0};
@@ -145,7 +173,7 @@ void draw_batteries(uint8_t tot_bars, uint8_t full_bars) {
 	draw_rect(origin, bt_width, bt_height, 2, 0x618C, NULL);
 	LCD_DrawLine(origin.x + 60 + 2, origin.y + 4, origin.x + 60 + 2, origin.y + 16, 0x618C);
 	LCD_DrawLine(origin.x + 60 + 3, origin.y + 4, origin.x + 60 + 3, origin.y + 16, 0x618C);
-	draw_battery_bars(origin, tot_bars, full_bars);
+	draw_battery_bars(origin, tot_bars, full_bars_happ);
 	
 	origin.x = 120;
 	origin.y = 60;
@@ -153,7 +181,7 @@ void draw_batteries(uint8_t tot_bars, uint8_t full_bars) {
 	draw_rect(origin, bt_width, bt_height, 2, 0x618C, NULL);
 	LCD_DrawLine(origin.x + 60 + 2, origin.y + 4, origin.x + 60 + 2, origin.y + 16, 0x618C);
 	LCD_DrawLine(origin.x + 60 + 3, origin.y + 4, origin.x + 60 + 3, origin.y + 16, 0x618C);
-	draw_battery_bars(origin, tot_bars, full_bars);
+	draw_battery_bars(origin, tot_bars, full_bars_sat);
 }
 
 void draw_battery_bars(Coords origin, uint8_t tot_bars, uint8_t full_bars) {

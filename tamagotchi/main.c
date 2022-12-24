@@ -33,12 +33,15 @@
 #ifdef SIMULATOR
 extern uint8_t ScaleFlag; // <- ScaleFlag needs to visible in order for the emulator to find the symbol (can be placed also inside system_LPC17xx.h but since it is RO, it needs more work)
 const float anim_timer = 100 ms;		// 100 ms == 1 second in emulator
+const float frame_timer = 5 ms;			// 5 ms == 50 ms in emulator
 #else
 const float anim_timer = 1000 ms;
+const float frame_timer = 50 ms;
 #endif
 
-int main(void)
-{
+volatile _Bool reset_clicked = 0;
+
+void start_game() {
 	Coords origin = {0, 0};
 	Coords text_origin = {0, 0};
 	const char mealTxt[] = "Meal";
@@ -46,17 +49,7 @@ int main(void)
 	const char happTxt[] = "Happiness";
 	const char satTxt[] = "Satiety";
 	const uint16_t bgColor = 0xfa83;					// orange
-	
-  SystemInit();  												/* System Initialization (i.e., PLL)  */
-  LCD_Initialization();
-	
 	LCD_Clear(White);
-	
-	init_RIT(anim_timer, 1);
-	init_timer(Timer0, 50 ms, SCALE(1), 3);
-	init_timer(Timer1, 50 ms, SCALE(1), 2);
-	joystick_init();
-	
 
 	// draw top
 	text_origin.x = 0;
@@ -91,13 +84,29 @@ int main(void)
 	enable_RIT();
 	enable_timer(Timer0);
 	enable_timer(Timer1);
+}
+
+int main(void)
+{	
+  SystemInit();  												/* System Initialization (i.e., PLL)  */
+  LCD_Initialization();
 	
+	init_RIT(frame_timer, 1);
+	init_timer(Timer0, anim_timer, SCALE(1), 3);
+	init_timer(Timer1, frame_timer, SCALE(1), 2);
+	joystick_init();
+	reset_clicked = 1;
 	LPC_SC->PCON |= 0x1;									/* power-down	mode										*/
 	LPC_SC->PCON &= ~(0x2);	
 
   while (1)	
   {
-		__ASM("wfi");
+		if (reset_clicked) {
+			start_game();
+			reset_global_timer_state();
+			reset_global_rit_state();
+			reset_clicked = 0;
+		}
   }
 }
 
