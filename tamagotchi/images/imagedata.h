@@ -8,6 +8,12 @@ extern const uint16_t donutMatrix[DONUT_HEIGHT][DONUT_WIDTH];
 #define EATING_WIDTH 16
 #define EATING_HEIGHT 24
 extern const uint16_t eatingMatrix[EATING_HEIGHT][EATING_WIDTH];
+#define EATINGDONUT_WIDTH 16
+#define EATINGDONUT_HEIGHT 24
+extern const uint16_t eatingdonutMatrix[EATINGDONUT_HEIGHT][EATINGDONUT_WIDTH];
+#define EATINGPIZZA_WIDTH 16
+#define EATINGPIZZA_HEIGHT 24
+extern const uint16_t eatingpizzaMatrix[EATINGPIZZA_HEIGHT][EATINGPIZZA_WIDTH];
 #define IDLE_WIDTH 16
 #define IDLE_HEIGHT 24
 extern const uint16_t idleMatrix[IDLE_HEIGHT][IDLE_WIDTH];

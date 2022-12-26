@@ -30,7 +30,6 @@ volatile _Bool start_snack_animation = 0;
 volatile enum PlayerState player_state = Idle;
 static int32_t running_animation_frame_counter = 0;
 static int32_t eating_animation_frame_counter = 0;
-static _Bool already_on_screen = 0;
 static uint32_t generic_animation_counter = 0;
 
 void reset_global_timer_state() {
@@ -44,7 +43,6 @@ void reset_global_timer_state() {
 	player_state = Idle;
 	running_animation_frame_counter = 0;
 	eating_animation_frame_counter = 0;
-	already_on_screen = 0;
 	generic_animation_counter = 0;
 }
 
@@ -99,11 +97,10 @@ void TIMER0_IRQHandler (void)
 	}
 	center_rect_in_rect(&center, LCD_WIDTH / PX_RT, LCD_HEIGHT / PX_RT, IDLE_WIDTH, IDLE_HEIGHT);
 	if ((seconds & 1) == 0) {
-		draw_image_diff(center, IDLE_WIDTH, IDLE_HEIGHT, already_on_screen ? PASS_TO_DRAWING(idle_2Matrix) : NULL, PASS_TO_DRAWING(idleMatrix));
+		draw_image_diff(center, IDLE_WIDTH, IDLE_HEIGHT, idleMatrix);
 	} else {
-		draw_image_diff(center, IDLE_2_WIDTH, IDLE_2_HEIGHT, PASS_TO_DRAWING(idleMatrix), PASS_TO_DRAWING(idle_2Matrix));
+		draw_image_diff(center, IDLE_2_WIDTH, IDLE_2_HEIGHT, idle_2Matrix);
 	}
-	already_on_screen = 1;
   LPC_TIM0->IR = 1;			/* clear interrupt flag */
   return;
 }
@@ -127,17 +124,17 @@ void draw_running_animation(uint32_t animation_counter) {
 		switch (running_animation_frame_counter) {
 			case 0:
 			case 2:
-				draw_image(center, width, height, PASS_TO_DRAWING(running1Matrix));
+				draw_image(center, width, height, running1Matrix);
 				break;
 			case 1:
 			case 3:
-				draw_image(center, width, height, PASS_TO_DRAWING(running2Matrix));
+				draw_image(center, width, height, running2Matrix);
 				break;
 			default:
 				if ((running_animation_frame_counter & 1) == 0) {
-					draw_image(center, width, height, PASS_TO_DRAWING(running6Matrix));
+					draw_image(center, width, height, running6Matrix);
 				} else {
-					draw_image(center, width, height, PASS_TO_DRAWING(running5Matrix));
+					draw_image(center, width, height, running5Matrix);
 				}
 				break;
 		}
@@ -178,9 +175,8 @@ void draw_eating_animation(uint32_t animation_counter) {
 	Coords center = {0, 0};
 	Coords food_coords = {10, 190};
 	_Bool done = 0;
-	const uint16_t* food = start_food_animation ? PASS_TO_DRAWING(pizzaMatrix) : PASS_TO_DRAWING(donutMatrix);
 	if (eating_animation_frame_counter == 0) {
-		draw_image_noscale(food_coords, PIZZA_WIDTH, PIZZA_HEIGHT, food);
+		draw_image_noscale(food_coords, PIZZA_WIDTH, PIZZA_HEIGHT, start_food_animation ? pizzaMatrix : donutMatrix);
 	}
 	if (res.rem == 0) {
 		// every 10 ticks of frame counter, we do a frame of animation
@@ -188,35 +184,35 @@ void draw_eating_animation(uint32_t animation_counter) {
 			case 0:
 			case 2:
 				center_rect_in_rect(&center, (LCD_WIDTH - (eating_animation_frame_counter * disl)) / PX_RT, LCD_HEIGHT / PX_RT, width, height);
-				draw_image(center, width, height, PASS_TO_DRAWING(running1Matrix));
+				draw_image(center, width, height, running1Matrix);
 				break;
 			case 1:
 				center_rect_in_rect(&center, (LCD_WIDTH - disl) / PX_RT, LCD_HEIGHT / PX_RT, width, height);
-				draw_image(center, width, height, PASS_TO_DRAWING(running2Matrix));
+				draw_image(center, width, height, running2Matrix);
 				break;
 			case 3:
 				center_rect_in_rect(&center, (LCD_WIDTH - (3 * disl)) / PX_RT, LCD_HEIGHT / PX_RT, width, height);
-				draw_image(center, width, height, PASS_TO_DRAWING(crouchedMatrix));
+				draw_image(center, width, height, crouchedMatrix);
 				break;
 			case 4:
 				center_rect_in_rect(&center, (LCD_WIDTH - (3 * disl)) / PX_RT, LCD_HEIGHT / PX_RT, width, height);
-				draw_image(center, width, height, PASS_TO_DRAWING(eatingMatrix));
+				draw_image(center, width, height, start_food_animation ? eatingpizzaMatrix : eatingdonutMatrix);
 				break;
 			case 7:
 			case 5:
 				center_rect_in_rect(&center, (LCD_WIDTH - ((7-eating_animation_frame_counter) * disl)) / PX_RT, LCD_HEIGHT / PX_RT, width, height);
-				draw_image_flipped(center, width, height, PASS_TO_DRAWING(running1Matrix));
+				draw_image_flipped(center, width, height, running1Matrix);
 				break;
 			case 6:
 				center_rect_in_rect(&center, (LCD_WIDTH - disl) / PX_RT, LCD_HEIGHT / PX_RT, width, height);
-				draw_image_flipped(center, width, height, PASS_TO_DRAWING(running2Matrix));
+				draw_image_flipped(center, width, height, running2Matrix);
 				break;
 			default:
 				done = 1;
 				break;
 		}
 		if (eating_animation_frame_counter == 2) {
-			draw_image_noscale(food_coords, PIZZA_WIDTH, PIZZA_HEIGHT, food);
+			draw_image_noscale(food_coords, PIZZA_WIDTH, PIZZA_HEIGHT, start_food_animation ? pizzaMatrix : donutMatrix);
 		} else if (eating_animation_frame_counter == 4) {
 			draw_rect(food_coords, 15, 24, 1, White, &bgColor);
 		}

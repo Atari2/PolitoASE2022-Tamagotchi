@@ -18,33 +18,29 @@ void draw_color_at(int x, int y, uint16_t color) {
 	}
 }
 
-void draw_image_noscale(Coords origin, int width, int height, const uint16_t* image_data) {
+void draw_image_noscale(Coords origin, int width, int height, const uint16_t image_data[height][width]) {
 	int i, j;
 	drawing = 1;
 	for (i = 0; i < height; ++i) {
 		for (j = 0; j < width; ++j) {
 			if (LCD_GetPoint(origin.x + j, origin.y + i) >= 0xFBFF) {
-				LCD_SetPoint(origin.x + j, origin.y + i, image_data[i*width+j]);
+				LCD_SetPoint(origin.x + j, origin.y + i, image_data[i][j]);
 			}
 		}
 	}
 	drawing = 0;
 }
 
-void draw_image_diff(Coords origin, int width, int height, const uint16_t* on_screen, const uint16_t* to_draw) {
+void draw_image_diff(Coords origin, int width, int height, const uint16_t image_data[height][width]) {
 	Coords center = {0, 0};
 	int i, j;
 	uint16_t val = 0;
-	if (on_screen == NULL) {
-		draw_image(origin, width, height, to_draw);
-		return;
-	}
 	drawing = 1;
 	center_rect_in_rect(&center, LCD_WIDTH / PX_RT, LCD_HEIGHT / PX_RT, width, height);
 	for (i = 0; i < height; ++i) {
 		for (j = 0; j < width; ++j) {
-			val = to_draw[i*width+j];
-			if (on_screen[i*width+j] == val)
+			val = image_data[i][j];
+			if (LCD_GetPoint(i, j) == val)
 				continue;
 			draw_color_at(origin.x + j, origin.y + i, val);
 		}
@@ -52,23 +48,23 @@ void draw_image_diff(Coords origin, int width, int height, const uint16_t* on_sc
 	drawing = 0;
 }
 
-void draw_image(Coords origin, int width, int height, const uint16_t* image_data) {
+void draw_image(Coords origin, int width, int height, const uint16_t image_data[height][width]) {
 	int i, j;
 	drawing = 1;
 	for (i = 0; i < height; ++i) {
 		for (j = 0; j < width; ++j) {
-			draw_color_at(origin.x + j, origin.y + i, image_data[i*width+j]);
+			draw_color_at(origin.x + j, origin.y + i, image_data[i][j]);
 		}
 	}
 	drawing = 0;
 }
 
-void draw_image_flipped(Coords origin, int width, int height, const uint16_t* image_data) {
+void draw_image_flipped(Coords origin, int width, int height, const uint16_t image_data[height][width]) {
 	int i, j;
 	drawing = 1;
 	for (i = 0; i < height; ++i) {
 		for (j = width - 1; j >= 0; --j) {
-			draw_color_at(origin.x + (width - 1) - j, origin.y + i, image_data[i*width+j]);
+			draw_color_at(origin.x + (width - 1) - j, origin.y + i, image_data[i][j]);
 		}
 	}
 	drawing = 0;

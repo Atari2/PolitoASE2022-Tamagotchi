@@ -313,7 +313,7 @@
           </ArmAdsMisc>
           <Cads>
             <interw>1</interw>
-            <Optim>3</Optim>
+            <Optim>4</Optim>
             <oTime>0</oTime>
             <SplitLS>0</SplitLS>
             <OneElfS>1</OneElfS>
@@ -544,11 +544,6 @@
               <FilePath>.\images\running6.c</FilePath>
             </File>
             <File>
-              <FileName>eating.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>.\images\eating.c</FilePath>
-            </File>
-            <File>
               <FileName>crouched.c</FileName>
               <FileType>1</FileType>
               <FilePath>.\images\crouched.c</FilePath>
@@ -562,6 +557,16 @@
               <FileName>donut.c</FileName>
               <FileType>1</FileType>
               <FilePath>.\images\donut.c</FilePath>
+            </File>
+            <File>
+              <FileName>eatingdonut.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\images\eatingdonut.c</FilePath>
+            </File>
+            <File>
+              <FileName>eatingpizza.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\images\eatingpizza.c</FilePath>
             </File>
           </Files>
         </Group>
