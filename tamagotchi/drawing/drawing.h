@@ -3,7 +3,7 @@
 #define LCD_HEIGHT 320
 #define LCD_WIDTH 240
 
-#define PX_RT 5
+#define PX_RT 4
 
 struct Coords {
 	int16_t x;

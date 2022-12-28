@@ -88,9 +88,9 @@ void TIMER0_IRQHandler (void)
 		draw_batteries(tot_bars, --full_bars_happ, --full_bars_sat);		
 		if (full_bars_happ == 0 || full_bars_sat == 0) {
 			// bars empty, tamagotchi starts running
-			player_state = Running;
 			disable_RIT();
 			disable_timer(Timer0); 	// disable self
+			player_state = Running;
 			LPC_TIM0->IR = 1;			// clear interrupt flag and return early
 			return;
 		}
@@ -106,19 +106,17 @@ void TIMER0_IRQHandler (void)
 }
 
 void draw_running_animation(uint32_t animation_counter) {
-	const uint32_t counter_tick = 500 / 100;
-	const int32_t disl = 8 * PX_RT;
-	const uint16_t bgColor = White;
+	const int8_t FRAME_TICKS = 8;
+	const int32_t disl_base = 8;
+	const int32_t disl = disl_base * PX_RT;
 	const uint16_t boxBgColor = 0xfa83;
 	uint16_t width = RUNNING1_WIDTH;
-	uint16_t real_width = width * PX_RT;
 	uint16_t height = RUNNING1_HEIGHT;
-	div_t res = div(animation_counter, counter_tick);
 	const char stoppedTxt[] = "Mario ran away :(";
 	const char resetTxt[] = "Reset";
 	Coords center = {0, 0};
 	
-	if (res.rem == 0) {
+	if (animation_counter % FRAME_TICKS == 0) {
 		// every 10 ticks of frame counter, we do a frame of animation
 		center_rect_in_rect(&center, (LCD_WIDTH - (running_animation_frame_counter * disl)) / PX_RT, LCD_HEIGHT / PX_RT, width, height);
 		switch (running_animation_frame_counter) {
@@ -139,10 +137,7 @@ void draw_running_animation(uint32_t animation_counter) {
 				break;
 		}
 
-		center.x *= PX_RT;
-		center.x += real_width;
-		center.y *= PX_RT;
-		if (center.x < 0) {
+		if (center.x <= (disl_base - width)) {
 			running_animation_frame_counter = 0;
 			player_state = Stopped;
 			center.x = 0;
@@ -159,26 +154,28 @@ void draw_running_animation(uint32_t animation_counter) {
 			enable_RIT();
 			return;
 		}
-		draw_rect(center, disl, height * PX_RT, 1, White, &bgColor);
 		running_animation_frame_counter++;
 	}
 }
 
 void draw_eating_animation(uint32_t animation_counter) {
-	const uint32_t counter_tick = 500 / 100;
+	const int8_t FRAME_TICKS = 8;	// considering setting this to 5, 1 frame tick is 50 ms
+																// so 50ms*5 = 250ms per frame of animation
+																// if there are 7 frames, 250ms*7 = 1.75 sec
+																// it's currently at 50ms*8*7 = 2.8 sec
+																// 8 is also a cool number because n % 8 can be transformed into
+																// n & (8-1) by the compiler which is way faster.
 	const int32_t disl = 8 * PX_RT;
 	const uint16_t bgColor = White;
 	uint16_t width = RUNNING1_WIDTH;
-	uint16_t real_width = width * PX_RT;
 	uint16_t height = RUNNING1_HEIGHT;
-	div_t res = div(animation_counter, counter_tick);
 	Coords center = {0, 0};
-	Coords food_coords = {10, 190};
+	Coords food_coords = {15, 180};
 	_Bool done = 0;
 	if (eating_animation_frame_counter == 0) {
 		draw_image_noscale(food_coords, PIZZA_WIDTH, PIZZA_HEIGHT, start_food_animation ? pizzaMatrix : donutMatrix);
 	}
-	if (res.rem == 0) {
+	if (animation_counter % FRAME_TICKS == 0) {
 		// every 10 ticks of frame counter, we do a frame of animation
 		switch (eating_animation_frame_counter) {
 			case 0:
@@ -200,11 +197,11 @@ void draw_eating_animation(uint32_t animation_counter) {
 				break;
 			case 7:
 			case 5:
-				center_rect_in_rect(&center, (LCD_WIDTH - ((7-eating_animation_frame_counter) * disl)) / PX_RT, LCD_HEIGHT / PX_RT, width, height);
+				center_rect_in_rect(&center, (LCD_WIDTH - ((8-eating_animation_frame_counter) * disl)) / PX_RT, LCD_HEIGHT / PX_RT, width, height);
 				draw_image_flipped(center, width, height, running1Matrix);
 				break;
 			case 6:
-				center_rect_in_rect(&center, (LCD_WIDTH - disl) / PX_RT, LCD_HEIGHT / PX_RT, width, height);
+				center_rect_in_rect(&center, (LCD_WIDTH - 2*disl) / PX_RT, LCD_HEIGHT / PX_RT, width, height);
 				draw_image_flipped(center, width, height, running2Matrix);
 				break;
 			default:
@@ -215,16 +212,6 @@ void draw_eating_animation(uint32_t animation_counter) {
 			draw_image_noscale(food_coords, PIZZA_WIDTH, PIZZA_HEIGHT, start_food_animation ? pizzaMatrix : donutMatrix);
 		} else if (eating_animation_frame_counter == 4) {
 			draw_rect(food_coords, 15, 24, 1, White, &bgColor);
-		}
-		center.y *= PX_RT;
-		if (eating_animation_frame_counter > 0 && eating_animation_frame_counter < 4) {
-			center.x *= PX_RT;
-			center.x += real_width;		
-			draw_rect(center, disl, height * PX_RT, 1, White, &bgColor);
-		} else if (eating_animation_frame_counter > 4 && eating_animation_frame_counter < 8) {
-			center.x *= PX_RT;
-			center.x -= disl;
-			draw_rect(center, disl, height * PX_RT, 1, White, &bgColor);
 		}
 		eating_animation_frame_counter++;
 	}

@@ -29,11 +29,18 @@ extern volatile _Bool start_snack_animation;
 extern volatile enum PlayerState player_state; 
 extern volatile _Bool reset_clicked;
 
-static uint8_t selected = 0;
+enum {
+	ButtonNone = 0,
+	ButtonMeal = 1,
+	ButtonSnack = 2
+} typedef SelectedButton;
+
+static SelectedButton selected = ButtonNone;
 
 void reset_global_rit_state(void) {
-	selected = 0;
+	selected = ButtonNone;
 }
+
 
 void RIT_IRQHandler (void)
 {			
@@ -55,14 +62,14 @@ void RIT_IRQHandler (void)
 			return;
 		}
 		switch (selected) {
-			case 0:
+			case ButtonNone:
 				// select was pressed but nothing was selected
 				break;
-			case 1:
+			case ButtonMeal:
 				start_food_animation = 1;
 			  disable_RIT();
 				break;
-			case 2:
+			case ButtonSnack:
 			  start_snack_animation = 1;
 			  disable_RIT();
 				break;
@@ -71,15 +78,19 @@ void RIT_IRQHandler (void)
 				break;
 		}
 	} else if (JOYSTICK_LEFT && player_state == Idle) {
-		draw_rect(origin, 120, 60, 2, Red, NULL); 
-		origin.x += 120;
-		draw_rect(origin, 120, 60, 2, Black, NULL); 
-		selected = 1;
+		if (selected != ButtonMeal) {
+			draw_rect(origin, 120, 60, 2, Red, NULL); 
+			origin.x += 120;
+			draw_rect(origin, 120, 60, 2, Black, NULL); 
+			selected = ButtonMeal;
+		}
 	} else if (JOYSTICK_RIGHT && player_state == Idle) {
-		draw_rect(origin, 120, 60, 2, Black, NULL); 
-		origin.x += 120;
-		draw_rect(origin, 120, 60, 2, Red, NULL); 
-		selected = 2;
+		if (selected != ButtonSnack) {
+			draw_rect(origin, 120, 60, 2, Black, NULL); 
+			origin.x += 120;
+			draw_rect(origin, 120, 60, 2, Red, NULL); 
+			selected = ButtonSnack;
+		}
 	}
 	
 	reset_RIT();

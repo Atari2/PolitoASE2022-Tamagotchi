@@ -10,7 +10,7 @@
 #include "lpc17xx.h"
 #include "RIT.h"
 
-static volatile uint32_t g_frequency = 25000000; 	// 25MHz by default
+static volatile uint32_t g_frequency = 100000000; 	// 100MHz by default
 
 void set_rit_frequency(uint32_t frequency) {
 	g_frequency = frequency;

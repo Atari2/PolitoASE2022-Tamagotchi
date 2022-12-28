@@ -163,6 +163,7 @@ void draw_batteries(uint8_t tot_bars, uint8_t full_bars_happ, uint8_t full_bars_
 	const uint16_t bt_width = 60;
 	const uint16_t bt_height = 20;
 	Coords origin = {0, 0};
+	drawing = 1;
 	origin.x = 0;
 	origin.y = 60;
 	center_rect_in_rect(&origin, 120, 40, bt_width, bt_height);
@@ -178,6 +179,7 @@ void draw_batteries(uint8_t tot_bars, uint8_t full_bars_happ, uint8_t full_bars_
 	LCD_DrawLine(origin.x + 60 + 2, origin.y + 4, origin.x + 60 + 2, origin.y + 16, 0x618C);
 	LCD_DrawLine(origin.x + 60 + 3, origin.y + 4, origin.x + 60 + 3, origin.y + 16, 0x618C);
 	draw_battery_bars(origin, tot_bars, full_bars_sat);
+	drawing = 0;
 }
 
 void draw_battery_bars(Coords origin, uint8_t tot_bars, uint8_t full_bars) {
