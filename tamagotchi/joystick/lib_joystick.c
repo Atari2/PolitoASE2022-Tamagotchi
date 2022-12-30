@@ -14,13 +14,27 @@
 /*----------------------------------------------------------------------------
   Function that initializes joysticks and switch them off
  *----------------------------------------------------------------------------*/
+ 
+ static const uint32_t JOYDIRECTION_SIZE = 5;
+ 
+static __attribute__((always_inline)) uint32_t make_pinsel(const uint32_t directions) {
+	const uint32_t base = 18;		// the 18th bit is the first that refers to the joystick in PINSEL3
+	uint32_t value = 0;
+	for (uint32_t i = joyvalue_base; i < joyvalue_base+JOYDIRECTION_SIZE; ++i) {
+		if ((directions & (1 << i)) != 0) {
+			value |= (3 << (base+(i*2)));
+		}
+	}
+	return value;
+}
 
-void joystick_init(void) {
+void joystick_init(const uint32_t directions) {
 	/* joystick Select functionality */
 	
-	const uint32_t joystick_functionality = (3 << 18) | (3 << 22) | (3 << 24);
-	const uint32_t joystick_fiodir = (1 << 25) | (1 << 27) | (1 << 28);
-	
-  LPC_PINCON->PINSEL3 &= ~joystick_functionality;	//PIN mode GPIO (00b value per P1.25)
-	LPC_GPIO1->FIODIR   &= ~joystick_fiodir;	//P1.25 Input (joysticks on PORT1 defined as Input) 
+  LPC_PINCON->PINSEL3 &= ~make_pinsel(directions);
+	LPC_GPIO1->FIODIR   &= ~directions;
+}
+
+__attribute__((always_inline)) int poll_joystick(const uint32_t directions) {
+	return (LPC_GPIO1->FIOPIN & directions) == 0;
 }

@@ -13,7 +13,6 @@ struct Coords {
 void draw_image_noscale(Coords origin, int width, int height, const uint16_t image_data[height][width]);
 void draw_image(Coords origin, int width, int height, const uint16_t image_data[height][width]);
 void draw_image_flipped(Coords origin, int width, int height, const uint16_t image_data[height][width]);
-void draw_image_diff(Coords origin, int width, int height, const uint16_t image_data[height][width]);
 void draw_rect(Coords origin, int width, int height, int border_thickness, uint16_t color, const uint16_t* bg_color);
 void center_rect_in_rect(Coords* origin, int32_t width, int32_t height, int32_t o_width, int32_t o_height);
 void center_text_in_rect(Coords* origin, int32_t width, int32_t height, uint32_t text_len, uint8_t text_scale);

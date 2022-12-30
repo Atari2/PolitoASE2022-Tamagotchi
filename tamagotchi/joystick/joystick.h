@@ -7,10 +7,17 @@
 ** Correlated files:    lib_joystick.c, funct_joystick.c
 **--------------------------------------------------------------------------------------------------------       
 *********************************************************************************************************/
+#include <stdint.h>
 
-#define JOYSTICK_SELECT (LPC_GPIO1->FIOPIN & (1<<25)) == 0
-#define JOYSTICK_LEFT (LPC_GPIO1->FIOPIN & (1<<27)) == 0
-#define JOYSTICK_RIGHT (LPC_GPIO1->FIOPIN & (1<<28)) == 0
+static const uint32_t joyvalue_base = 25;
 
+enum JoystickDirection {
+	JoySelect = 1 << (joyvalue_base+0),
+	JoyDown = 1 << (joyvalue_base+1),
+	JoyLeft = 1 << (joyvalue_base+2),
+	JoyRight = 1 << (joyvalue_base+3),
+	JoyUp = 1 << (joyvalue_base+4)
+} typedef JoystickDirection;
 /* lib_joystick */
-void joystick_init(void);
+void joystick_init(const uint32_t directions);
+__attribute__((always_inline)) int poll_joystick(const uint32_t directions);

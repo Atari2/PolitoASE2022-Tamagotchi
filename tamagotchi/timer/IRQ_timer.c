@@ -17,6 +17,7 @@
 #include <stdio.h>
 
 extern volatile _Bool drawing;
+extern volatile SelectedButton selected;
 
 static const uint8_t tot_bars = 8;
 
@@ -97,9 +98,9 @@ void TIMER0_IRQHandler (void)
 	}
 	center_rect_in_rect(&center, LCD_WIDTH / PX_RT, LCD_HEIGHT / PX_RT, IDLE_WIDTH, IDLE_HEIGHT);
 	if ((seconds & 1) == 0) {
-		draw_image_diff(center, IDLE_WIDTH, IDLE_HEIGHT, idleMatrix);
+		draw_image(center, IDLE_WIDTH, IDLE_HEIGHT, idleMatrix);
 	} else {
-		draw_image_diff(center, IDLE_2_WIDTH, IDLE_2_HEIGHT, idle_2Matrix);
+		draw_image(center, IDLE_2_WIDTH, IDLE_2_HEIGHT, idle_2Matrix);
 	}
   LPC_TIM0->IR = 1;			/* clear interrupt flag */
   return;
@@ -240,6 +241,29 @@ void draw_eating_animation(uint32_t animation_counter) {
 	}
 }
 
+void handle_joystick_input() {
+	static SelectedButton previous_value = ButtonNone;
+	Coords origin = {0, LCD_HEIGHT - 60 - 1};
+	if (previous_value != selected) {
+		switch (selected) {
+			case ButtonMeal:
+				draw_rect(origin, 120, 60, 2, Red, NULL); 
+				origin.x += 120;
+				draw_rect(origin, 120, 60, 2, Black, NULL); 
+			  break;
+			case ButtonSnack:
+				draw_rect(origin, 120, 60, 2, Black, NULL); 
+				origin.x += 120;
+				draw_rect(origin, 120, 60, 2, Red, NULL); 
+				break;
+			case ButtonNone:
+			default:
+				break;
+		}
+		previous_value = selected;
+	}
+}
+
 
 /******************************************************************************
 ** Function name:		Timer1_IRQHandler
@@ -259,6 +283,7 @@ void TIMER1_IRQHandler (void)
 					player_state = Eating;
 				}
 				generic_animation_counter = 0;
+				handle_joystick_input();
 				break;
 			case Eating:
 				draw_eating_animation(generic_animation_counter++);

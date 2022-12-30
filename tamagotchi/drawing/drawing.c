@@ -6,6 +6,22 @@
 
 volatile _Bool drawing = 0;
 
+// this function only handles either straight vertical or straight horizontal lines
+// it also assumes that x1 < x2 and y1 < y2
+static __attribute__((always_inline)) void draw_straight_line(uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2, uint16_t color) {
+	if (x1 == x2) {
+		// vertical line
+		for (uint16_t i = y1; i <= y2; ++i) {
+			LCD_SetPoint(x1, i, color);
+		}
+	} else {
+		// horizontal line
+		for (uint16_t i = x1; i <= x2; ++i) {
+			LCD_SetPoint(i, y1, color);
+		}
+	}
+}
+
 void draw_color_at(int x, int y, uint16_t color) {
 	// map a single pixel to a 5x5 area
 	int real_x = x * PX_RT;
@@ -14,7 +30,7 @@ void draw_color_at(int x, int y, uint16_t color) {
 	if (real_x < 0 || real_x > MAX_X || real_y < 0 || real_y > MAX_Y)
 		return;
 	for (i = 0; i < PX_RT; ++i) {
-		LCD_DrawLine(real_x, real_y + i, real_x + PX_RT, real_y + i, color);
+		draw_straight_line(real_x, real_y + i, real_x + PX_RT, real_y + i, color);
 	}
 }
 
@@ -26,23 +42,6 @@ void draw_image_noscale(Coords origin, int width, int height, const uint16_t ima
 			if (LCD_GetPoint(origin.x + j, origin.y + i) >= 0xFBFF) {
 				LCD_SetPoint(origin.x + j, origin.y + i, image_data[i][j]);
 			}
-		}
-	}
-	drawing = 0;
-}
-
-void draw_image_diff(Coords origin, int width, int height, const uint16_t image_data[height][width]) {
-	Coords center = {0, 0};
-	int i, j;
-	uint16_t val = 0;
-	drawing = 1;
-	center_rect_in_rect(&center, LCD_WIDTH / PX_RT, LCD_HEIGHT / PX_RT, width, height);
-	for (i = 0; i < height; ++i) {
-		for (j = 0; j < width; ++j) {
-			val = image_data[i][j];
-			if (LCD_GetPoint(i, j) == val)
-				continue;
-			draw_color_at(origin.x + j, origin.y + i, val);
 		}
 	}
 	drawing = 0;
@@ -73,11 +72,12 @@ void draw_image_flipped(Coords origin, int width, int height, const uint16_t ima
 void draw_rect(Coords origin, int width, int height, int border_thickness, uint16_t color, const uint16_t* bg_color) {
 	int i = 0;
 	uint16_t bg_color_value = 0;
+	drawing = 1;
 	for (i = 0; i < border_thickness; ++i) {
-		LCD_DrawLine(origin.x, origin.y, origin.x + width, origin.y, color); // top line
-		LCD_DrawLine(origin.x, origin.y + height, origin.x + width, origin.y + height, color); // bottom line
-		LCD_DrawLine(origin.x, origin.y, origin.x, origin.y + height, color); // left line
-		LCD_DrawLine(origin.x + width, origin.y, origin.x + width, origin.y + height, color); // right line
+		draw_straight_line(origin.x, origin.y, origin.x + width, origin.y, color); // top line
+		draw_straight_line(origin.x, origin.y + height, origin.x + width, origin.y + height, color); // bottom line
+		draw_straight_line(origin.x, origin.y, origin.x, origin.y + height, color); // left line
+		draw_straight_line(origin.x + width, origin.y, origin.x + width, origin.y + height, color); // right line
 		origin.x++;
 		origin.y++;
 		width -= 2;
@@ -86,10 +86,10 @@ void draw_rect(Coords origin, int width, int height, int border_thickness, uint1
 	if (bg_color) {
 		bg_color_value = *bg_color;
 		for (i = origin.y; i <= origin.y + height; ++i) {
-			LCD_DrawLine(origin.x, i, origin.x + width, i, bg_color_value);
+			draw_straight_line(origin.x, i, origin.x + width, i, bg_color_value);
 		} 
 	}
-
+	drawing = 0;
 }
 
 #define FONT_WIDTH 8
@@ -104,7 +104,7 @@ void draw_char_expanded(uint16_t x, uint16_t y, char c, uint16_t charColor, uint
 		for(j=0; j<FONT_WIDTH*scale; j += scale) {
 			if(((tmp_char >> ((FONT_WIDTH-1) - (j / scale))) & 0x01) == 0x01) {
 				for (k = 0; k < scale; ++k) {
-					LCD_DrawLine(x + j, y + i + k, x  + j + scale, y + i + k, charColor);
+					draw_straight_line(x + j, y + i + k, x  + j + scale, y + i + k, charColor);
 				}
 			}
 		}
@@ -128,6 +128,7 @@ void draw_text(int x, int y, const char* text, uint16_t color, uint8_t scale) {
 	char TempChar;
 	const uint16_t fw = FONT_WIDTH * scale;
 	const uint16_t fh = FONT_HEIGHT * scale;
+	drawing = 1;
 	do {
 		TempChar = *text++;
 		if (scale == 1) {
@@ -145,6 +146,7 @@ void draw_text(int x, int y, const char* text, uint16_t color, uint8_t scale) {
 			y = 0;
 		}    
 	} while (*text != 0);
+	drawing = 0;
 }
 
 void center_rect_in_rect(Coords* origin, int32_t width, int32_t height, int32_t o_width, int32_t o_height) {
@@ -168,16 +170,16 @@ void draw_batteries(uint8_t tot_bars, uint8_t full_bars_happ, uint8_t full_bars_
 	origin.y = 60;
 	center_rect_in_rect(&origin, 120, 40, bt_width, bt_height);
 	draw_rect(origin, bt_width, bt_height, 2, 0x618C, NULL);
-	LCD_DrawLine(origin.x + 60 + 2, origin.y + 4, origin.x + 60 + 2, origin.y + 16, 0x618C);
-	LCD_DrawLine(origin.x + 60 + 3, origin.y + 4, origin.x + 60 + 3, origin.y + 16, 0x618C);
+	draw_straight_line(origin.x + 60 + 2, origin.y + 4, origin.x + 60 + 2, origin.y + 16, 0x618C);
+	draw_straight_line(origin.x + 60 + 3, origin.y + 4, origin.x + 60 + 3, origin.y + 16, 0x618C);
 	draw_battery_bars(origin, tot_bars, full_bars_happ);
 	
 	origin.x = 120;
 	origin.y = 60;
 	center_rect_in_rect(&origin, 120, 40, bt_width, bt_height);
 	draw_rect(origin, bt_width, bt_height, 2, 0x618C, NULL);
-	LCD_DrawLine(origin.x + 60 + 2, origin.y + 4, origin.x + 60 + 2, origin.y + 16, 0x618C);
-	LCD_DrawLine(origin.x + 60 + 3, origin.y + 4, origin.x + 60 + 3, origin.y + 16, 0x618C);
+	draw_straight_line(origin.x + 60 + 2, origin.y + 4, origin.x + 60 + 2, origin.y + 16, 0x618C);
+	draw_straight_line(origin.x + 60 + 3, origin.y + 4, origin.x + 60 + 3, origin.y + 16, 0x618C);
 	draw_battery_bars(origin, tot_bars, full_bars_sat);
 	drawing = 0;
 }

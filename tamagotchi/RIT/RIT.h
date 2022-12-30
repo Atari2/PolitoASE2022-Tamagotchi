@@ -12,6 +12,11 @@
 #include <stdint.h>
 /* init_RIT.c */
 #define ms *1.0f
+enum {
+	ButtonNone = 0,
+	ButtonMeal = 1,
+	ButtonSnack = 2
+} typedef SelectedButton;
 extern int init_RIT(float millis, uint32_t priority);
 extern void enable_RIT( void );
 extern void disable_RIT( void );
