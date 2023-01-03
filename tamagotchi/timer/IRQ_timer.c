@@ -63,7 +63,7 @@ void advance_time() {
 	}
 	format_time(tmp);
 	center_text_in_rect(&text_origin, 240, 20, sizeof(tmp) - 1, 1);
-	GUI_Text(text_origin.x, text_origin.y, (uint8_t*)tmp, Black, White);
+	draw_text_bg(text_origin.x, text_origin.y, tmp, Black, White);
 }
 
 const char foodTxt[] = "FOOD!";
@@ -173,6 +173,9 @@ void draw_eating_animation(uint32_t animation_counter) {
 	Coords center = {0, 0};
 	Coords food_coords = {15, 180};
 	_Bool done = 0;
+	if (!start_food_animation) {
+			food_coords.y += 5;
+	}
 	if (eating_animation_frame_counter == 0) {
 		draw_image_noscale(food_coords, PIZZA_WIDTH, PIZZA_HEIGHT, start_food_animation ? pizzaMatrix : donutMatrix);
 	}
@@ -212,6 +215,8 @@ void draw_eating_animation(uint32_t animation_counter) {
 		if (eating_animation_frame_counter == 2) {
 			draw_image_noscale(food_coords, PIZZA_WIDTH, PIZZA_HEIGHT, start_food_animation ? pizzaMatrix : donutMatrix);
 		} else if (eating_animation_frame_counter == 4) {
+			food_coords.y += 3;
+			food_coords.x -= 5;
 			draw_rect(food_coords, 15, 24, 1, White, &bgColor);
 		}
 		eating_animation_frame_counter++;
@@ -247,9 +252,10 @@ void handle_joystick_input() {
 	if (previous_value != selected) {
 		switch (selected) {
 			case ButtonMeal:
-				draw_rect(origin, 120, 60, 2, Red, NULL); 
-				origin.x += 120;
+				origin.x = 120;
 				draw_rect(origin, 120, 60, 2, Black, NULL); 
+				origin.x = 0;
+				draw_rect(origin, 120, 60, 2, Red, NULL); 
 			  break;
 			case ButtonSnack:
 				draw_rect(origin, 120, 60, 2, Black, NULL); 

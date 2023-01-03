@@ -92,8 +92,8 @@ int main(void)
   LCD_Initialization();
 	
 	init_RIT(frame_timer, 1);
-	init_timer(Timer0, anim_timer, SCALE(1), 3);
-	init_timer(Timer1, frame_timer, SCALE(1), 2);
+	init_timer(Timer0, anim_timer, SCALE(1), 2);
+	init_timer(Timer1, frame_timer, SCALE(1), 3);
 	joystick_init(JoySelect | JoyLeft | JoyRight);
 	reset_clicked = 1;
 	LPC_SC->PCON |= 0x1;									/* power-down	mode										*/

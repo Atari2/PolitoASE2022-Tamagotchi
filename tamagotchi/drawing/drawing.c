@@ -149,6 +149,12 @@ void draw_text(int x, int y, const char* text, uint16_t color, uint8_t scale) {
 	drawing = 0;
 }
 
+void draw_text_bg(int x, int y, const char* text, uint16_t color, uint16_t bg) {
+	drawing = 1;
+	GUI_Text(x, y, (uint8_t*)text, color, bg);
+	drawing = 0;
+}
+
 void center_rect_in_rect(Coords* origin, int32_t width, int32_t height, int32_t o_width, int32_t o_height) {
 	origin->x = origin->x + (width / 2) - (o_width / 2);
 	origin->y = origin->y + (height / 2) - (o_height / 2);

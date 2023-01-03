@@ -17,5 +17,6 @@ void draw_rect(Coords origin, int width, int height, int border_thickness, uint1
 void center_rect_in_rect(Coords* origin, int32_t width, int32_t height, int32_t o_width, int32_t o_height);
 void center_text_in_rect(Coords* origin, int32_t width, int32_t height, uint32_t text_len, uint8_t text_scale);
 void draw_text(int x, int y, const char* text, uint16_t color, uint8_t scale);
+void draw_text_bg(int x, int y, const char* text, uint16_t color, uint16_t bg);
 void draw_batteries(uint8_t tot_bars, uint8_t full_bars_happ, uint8_t full_bars_sat);
 void draw_battery_bars(Coords origin, uint8_t tot_bars, uint8_t full_bars);

@@ -20,8 +20,8 @@
 static __attribute__((always_inline)) uint32_t make_pinsel(const uint32_t directions) {
 	const uint32_t base = 18;		// the 18th bit is the first that refers to the joystick in PINSEL3
 	uint32_t value = 0;
-	for (uint32_t i = joyvalue_base; i < joyvalue_base+JOYDIRECTION_SIZE; ++i) {
-		if ((directions & (1 << i)) != 0) {
+	for (uint32_t i = 0; i < JOYDIRECTION_SIZE; ++i) {
+		if ((directions & (1 << (joyvalue_base+i))) != 0) {
 			value |= (3 << (base+(i*2)));
 		}
 	}
