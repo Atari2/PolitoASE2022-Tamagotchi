@@ -28,16 +28,12 @@
 #include "joystick/joystick.h"
 #include "timer/timer.h"
 #include <stdlib.h>
-#define SIMULATOR 1
 
 #ifdef SIMULATOR
 extern uint8_t ScaleFlag; // <- ScaleFlag needs to visible in order for the emulator to find the symbol (can be placed also inside system_LPC17xx.h but since it is RO, it needs more work)
-const float anim_timer = 100 ms;		// 100 ms == 1 second in emulator
-const float frame_timer = 5 ms;			// 5 ms == 50 ms in emulator
-#else
-const float anim_timer = 1000 ms;
-const float frame_timer = 50 ms;
 #endif
+float anim_timer = 1000 ms;
+float frame_timer = 50 ms;
 
 volatile _Bool reset_clicked = 0;
 

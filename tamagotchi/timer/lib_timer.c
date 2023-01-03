@@ -355,10 +355,7 @@ int init_timer( TimerNo timer_num, float millis, uint32_t prescale,  uint32_t pr
 			break;
 		case Timer2:
 			LPC_SC->PCONP |= (1<<22);
-			LPC_TIM2->MR0 = (TimerInterval / 2);	// MR0 half the time of MR1
-		#ifdef LAB10
-			LPC_TIM2->MR1 = TimerInterval;
-		#endif
+			LPC_TIM2->MR0 = TimerInterval;
 		  LPC_TIM2->MCR = MCR2;
 		  LPC_TIM2->PR = prescale;
 			break;
