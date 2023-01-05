@@ -32,8 +32,6 @@
 #ifdef SIMULATOR
 extern uint8_t ScaleFlag; // <- ScaleFlag needs to visible in order for the emulator to find the symbol (can be placed also inside system_LPC17xx.h but since it is RO, it needs more work)
 #endif
-float anim_timer = 1000 ms;
-float frame_timer = 50 ms;
 
 volatile _Bool reset_clicked = 0;
 
@@ -84,9 +82,10 @@ void start_game() {
 
 int main(void)
 {	
+	float anim_timer = 1000 ms;
+	float frame_timer = 50 ms;
   SystemInit();  												/* System Initialization (i.e., PLL)  */
   LCD_Initialization();
-	
 	init_RIT(frame_timer, 1);
 	init_timer(Timer0, anim_timer, SCALE(1), 2);
 	init_timer(Timer1, frame_timer, SCALE(1), 3);

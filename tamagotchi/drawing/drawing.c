@@ -22,15 +22,13 @@ static __attribute__((always_inline)) void draw_straight_line(uint16_t x1, uint1
 	}
 }
 
-void draw_color_at(int x, int y, uint16_t color) {
-	// map a single pixel to a 5x5 area
-	int real_x = x * PX_RT;
-	int real_y = y * PX_RT;
-	int i;
-	if (real_x < 0 || real_x > MAX_X || real_y < 0 || real_y > MAX_Y)
-		return;
-	for (i = 0; i < PX_RT; ++i) {
-		draw_straight_line(real_x, real_y + i, real_x + PX_RT, real_y + i, color);
+static __attribute__((always_inline)) void draw_color_at(int x, int y, uint16_t color) {
+	const int real_x = x * PX_RT;
+	const int real_y = y * PX_RT;
+	for (int i = 0; i < PX_RT; ++i) {
+		for (int j = 0; j < PX_RT; ++j) {
+			LCD_SetPoint(real_x + j, real_y + i, color); 
+		}
 	}
 }
 
@@ -208,4 +206,16 @@ void draw_battery_bars(Coords origin, uint8_t tot_bars, uint8_t full_bars) {
 		draw_rect(coords, bar_width, bar_height, 1, White, &bgColorEmpty);
 		coords.x += bar_width + spacing;
 	}
+}
+
+void draw_single_bar(uint8_t tot_bars, _Bool right, _Bool full) {
+	const uint8_t bar_height = 14;
+	const uint8_t bar_width = 5;
+	const uint16_t color = full ? Black : White;
+	Coords origin = {33, 73};
+	if (right) {
+		origin.x += 120;
+	}
+	origin.x += (5+2)*(tot_bars);
+	draw_rect(origin, bar_width, bar_height, 1, color, &color);
 }

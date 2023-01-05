@@ -20,3 +20,4 @@ void draw_text(int x, int y, const char* text, uint16_t color, uint8_t scale);
 void draw_text_bg(int x, int y, const char* text, uint16_t color, uint16_t bg);
 void draw_batteries(uint8_t tot_bars, uint8_t full_bars_happ, uint8_t full_bars_sat);
 void draw_battery_bars(Coords origin, uint8_t tot_bars, uint8_t full_bars);
+void draw_single_bar(uint8_t tot_bars, _Bool right, _Bool full);

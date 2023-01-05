@@ -47,8 +47,14 @@ void reset_global_timer_state() {
 	generic_animation_counter = 0;
 }
 
+static const char numbers[60][3] = {
+	"00", "01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", 
+	"20", "21", "22", "23", "24", "25", "26", "27", "28", "29", "30", "31", "32", "33", "34", "35", "36", "37", "38", "39", 
+	"40", "41", "42", "43", "44", "45", "46", "47", "48", "49", "50", "51", "52", "53", "54", "55", "56", "57", "58", "59"
+};
+
 void format_time(char buf[14]) {
-	snprintf(buf, 14, "Age: %02d:%02d:%02d", hours, minutes, seconds);
+	snprintf(buf, 14, "Age: %s:%s:%s", numbers[hours], numbers[minutes], numbers[seconds]);
 }
 
 void advance_time() {
@@ -66,8 +72,6 @@ void advance_time() {
 	draw_text_bg(text_origin.x, text_origin.y, tmp, Black, White);
 }
 
-const char foodTxt[] = "FOOD!";
-const char snackTxt[] = "SNACK!";
 /******************************************************************************
 ** Function name:		Timer0_IRQHandler
 **
@@ -86,7 +90,14 @@ void TIMER0_IRQHandler (void)
 	}
 	advance_time();
 	if ((seconds % 5) == 0) {
-		draw_batteries(tot_bars, --full_bars_happ, --full_bars_sat);		
+		--full_bars_happ;
+		--full_bars_sat;
+		if (full_bars_happ == tot_bars && full_bars_sat == tot_bars) {
+			draw_batteries(tot_bars, full_bars_happ, full_bars_sat);
+		} else {
+			draw_single_bar(full_bars_happ, 0, 0);
+			draw_single_bar(full_bars_sat, 1, 0);
+		}
 		if (full_bars_happ == 0 || full_bars_sat == 0) {
 			// bars empty, tamagotchi starts running
 			disable_RIT();
@@ -152,6 +163,7 @@ void draw_running_animation(uint32_t animation_counter) {
 			draw_rect(center, LCD_WIDTH, 60, 2, Red, &boxBgColor); 
 			center_text_in_rect(&center, LCD_WIDTH, 60, sizeof(resetTxt) - 1, 2);
 			draw_text(center.x, center.y, resetTxt, Black, 2);
+			disable_timer(Timer1);
 			enable_RIT();
 			return;
 		}
@@ -236,8 +248,13 @@ void draw_eating_animation(uint32_t animation_counter) {
 				have_to_redraw = 0;
 			}
 		}
-		if (have_to_redraw)
-			draw_batteries(tot_bars, full_bars_happ, full_bars_sat);
+		if (have_to_redraw) {
+			if (start_food_animation) {
+				draw_single_bar(full_bars_sat - 1, 1, 1);
+			} else {
+				draw_single_bar(full_bars_happ - 1, 0, 1); 
+			}
+		}
 		start_food_animation = 0;
 		start_snack_animation = 0;
 		player_state = Idle;
