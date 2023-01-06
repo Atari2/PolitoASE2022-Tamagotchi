@@ -285,7 +285,7 @@ int init_timer( TimerNo timer_num, float millis, uint32_t prescale,  uint32_t pr
 			//	 <i> 1 Stop on MR3: the TC and PC will be stopped and TCR[3] will be set to 0 if MR3 matches the TC
 			//	 <i> 0 Feature disabled.
 			//   </e>
-			MCR2 = 25;
+			MCR2 = 3;
 			// </h>
 			// <h> timer3 MCR
 			//   <e.0> MR0I
