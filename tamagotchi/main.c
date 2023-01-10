@@ -27,6 +27,7 @@
 #include "RIT/RIT.h"
 #include "joystick/joystick.h"
 #include "timer/timer.h"
+#include "TouchPanel/TouchPanel.h"
 #include <stdlib.h>
 
 #ifdef SIMULATOR
@@ -86,6 +87,7 @@ int main(void)
 	float frame_timer = 50 ms;
   SystemInit();  												/* System Initialization (i.e., PLL)  */
   LCD_Initialization();
+	TouchPanel_Calibrate();
 	init_RIT(frame_timer, 1);
 	init_timer(Timer0, anim_timer, SCALE(1), 2);
 	init_timer(Timer1, frame_timer, SCALE(1), 3);
