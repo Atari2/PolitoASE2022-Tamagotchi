@@ -32,6 +32,8 @@ volatile enum PlayerState player_state = Idle;
 static int32_t running_animation_frame_counter = 0;
 static int32_t eating_animation_frame_counter = 0;
 static uint32_t generic_animation_counter = 0;
+extern Coords player_coords;
+extern int volume;
 
 void reset_global_timer_state() {
 	seconds = -1; // starts from second -1 to simulate second 0
@@ -108,6 +110,8 @@ void TIMER0_IRQHandler (void)
 		}
 	}
 	center_rect_in_rect(&center, LCD_WIDTH / PX_RT, LCD_HEIGHT / PX_RT, IDLE_WIDTH, IDLE_HEIGHT);
+	player_coords.x = center.x * PX_RT;
+	player_coords.y = center.y * PX_RT;
 	if ((seconds & 1) == 0) {
 		draw_image(center, IDLE_WIDTH, IDLE_HEIGHT, idleMatrix);
 	} else {
@@ -263,6 +267,11 @@ void draw_eating_animation(uint32_t animation_counter) {
 	}
 }
 
+void draw_cuddling_animation(uint32_t animation_counter) {
+
+
+}
+
 void handle_joystick_input() {
 	static SelectedButton previous_value = ButtonNone;
 	Coords origin = {0, LCD_HEIGHT - 60 - 1};
@@ -316,6 +325,9 @@ void TIMER1_IRQHandler (void)
 				break;
 			case Stopped:
 				break;
+			case Cuddling:
+				draw_cuddling_animation(generic_animation_counter++);
+				break;
 			default:
 				break;
 		}
@@ -323,6 +335,8 @@ void TIMER1_IRQHandler (void)
   LPC_TIM1->IR = 1;			/* clear interrupt flag */
   return;
 }
+
+int SinTab[32] = {512,612,708,796,873,937,984,1013,1023,1013,984,937,873,796,708,612,512,412,316,228,151,87,40,11,1,11,40,87,151,228,316,412};
 
 /******************************************************************************
 ** Function name:		Timer1_IRQHandler
@@ -335,6 +349,10 @@ void TIMER1_IRQHandler (void)
 ******************************************************************************/
 void TIMER2_IRQHandler (void)
 {
+	static int ticks = 0;
+	LPC_DAC->DACR = (SinTab[ticks++]*volume/100)<<6;
+	if (ticks == 32)
+		ticks = 0;
 	LPC_TIM2->IR = 1;
   return;
 }

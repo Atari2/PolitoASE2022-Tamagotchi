@@ -15,7 +15,11 @@ void ADC_init (void) {
                           (1<<21);      /* enable ADC                         */ 
 
   LPC_ADC->ADINTEN     =  (1<< 8);      /* global enable interrupt            */
-
+	
+	// startup speaker
+	LPC_PINCON->PINSEL1 |= (1<<21);
+	LPC_PINCON->PINSEL1 &= ~(1<<20);
+	LPC_GPIO0->FIODIR |= (1<<26);
   NVIC_EnableIRQ(ADC_IRQn);             /* enable ADC Interrupt               */
 }
 

@@ -26,7 +26,8 @@ enum PlayerState {
 	Idle = 0,
 	Eating = 1,
 	Running = 2,
-	Stopped = 3
+	Stopped = 3,
+	Cuddling = 4
 };
 
 extern int init_timer( TimerNo timer_num, float millis, uint32_t prescale, uint32_t priority);

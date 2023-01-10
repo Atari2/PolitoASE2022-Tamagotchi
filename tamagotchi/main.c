@@ -26,12 +26,18 @@
 #include "drawing/drawing.h"
 #include "RIT/RIT.h"
 #include "joystick/joystick.h"
-#include "timer/timer.h"
 #include "TouchPanel/TouchPanel.h"
+#include "adc/adc.h"
+#include "timer/timer.h"
 #include <stdlib.h>
 
 #ifdef SIMULATOR
 extern uint8_t ScaleFlag; // <- ScaleFlag needs to visible in order for the emulator to find the symbol (can be placed also inside system_LPC17xx.h but since it is RO, it needs more work)
+#undef RGB565CONVERT
+#define RGB565CONVERT(red, green, blue)\
+(uint16_t)( (( red   >> 3 ) << 11 ) | \
+(( green >> 3 ) << 5  ) | \
+( blue  >> 3 ))
 #endif
 
 volatile _Bool reset_clicked = 0;
@@ -43,7 +49,7 @@ void start_game() {
 	const char snackTxt[] = "Snack";
 	const char happTxt[] = "Happiness";
 	const char satTxt[] = "Satiety";
-	const uint16_t bgColor = 0xfa83;					// orange
+	const uint16_t bgColor = RGB565CONVERT(0xFF, 0xA5, 0x00);					// orange
 	LCD_Clear(White);
 
 	// draw top
@@ -79,6 +85,7 @@ void start_game() {
 	enable_RIT();
 	enable_timer(Timer0);
 	enable_timer(Timer1);
+	enable_timer(Timer2);
 }
 
 int main(void)
@@ -88,10 +95,12 @@ int main(void)
   SystemInit();  												/* System Initialization (i.e., PLL)  */
   LCD_Initialization();
 	TP_Init();
+	ADC_init();
 	TouchPanel_Calibrate();
 	init_RIT(frame_timer, 1);
 	init_timer(Timer0, anim_timer, SCALE(1), 2);
 	init_timer(Timer1, frame_timer, SCALE(1), 3);
+	init_timer(Timer2, 3.82 ms, SCALE(1), 4);
 	joystick_init(JoySelect | JoyLeft | JoyRight);
 	reset_clicked = 1;
 	LPC_SC->PCON |= 0x1;									/* power-down	mode										*/

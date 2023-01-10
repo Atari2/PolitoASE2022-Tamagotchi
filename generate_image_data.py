@@ -1,13 +1,25 @@
 from PIL import Image
 import os
 import glob
+import argparse
 
 # the LCD should be rgb565 but using rgb555 for the conversion makes it yield better color accuracy.
 # so either the emulator is wrong or the LCD specification is wrong.
 # once I can try it on the actual board I'll see which one is right.
+
+parser = argparse.ArgumentParser(description='Convert images to C arrays.')
+parser.add_argument('-b', '--board', action='store_true', help='Generate code for the board.', default=False)
+args = parser.parse_args()
+
 def make_rgb_555(r, g, b):
     r = ((r & 0xFF) >> 3)
     g = ((g & 0xFF) >> 3)
+    b = ((b & 0xFF) >> 3)
+    return f'0x{((r << 11) | (g << 5) | b):04X}'
+
+def make_rgb_565(r, g, b):
+    r = ((r & 0xFF) >> 3)
+    g = ((g & 0xFF) >> 2)
     b = ((b & 0xFF) >> 3)
     return f'0x{((r << 11) | (g << 5) | b):04X}'
 
@@ -28,7 +40,7 @@ with open('tamagotchi/images/imagedata.h', 'w') as h:
                     matrix_str += '\t{'
                     for j in range(w):
                         r,g,b = im.getpixel((j, i))
-                        matrix_str += f'{make_rgb_555(r, g, b)}{", " if j < w - 1 else " "}'
+                        matrix_str += f'{make_rgb_565(r, g, b) if args.board else make_rgb_555(r, g, b)}{", " if j < w - 1 else " "}'
                     matrix_str += '},\n'
                 matrix_str += '};\n'
                 f.write(matrix_str)
