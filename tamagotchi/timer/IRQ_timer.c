@@ -13,6 +13,7 @@
 #include "../drawing/drawing.h"
 #include "../images/imagedata.h"
 #include "../RIT/RIT.h"
+#include "../adc/adc.h"
 #include <stdlib.h>
 #include <stdio.h>
 
@@ -268,7 +269,7 @@ void draw_eating_animation(uint32_t animation_counter) {
 }
 
 void draw_cuddling_animation(uint32_t animation_counter) {
-
+	// TODO: add cuddling animation
 
 }
 
@@ -336,7 +337,6 @@ void TIMER1_IRQHandler (void)
   return;
 }
 
-int SinTab[32] = {512,612,708,796,873,937,984,1013,1023,1013,984,937,873,796,708,612,512,412,316,228,151,87,40,11,1,11,40,87,151,228,316,412};
 
 /******************************************************************************
 ** Function name:		Timer1_IRQHandler
@@ -347,12 +347,41 @@ int SinTab[32] = {512,612,708,796,873,937,984,1013,1023,1013,984,937,873,796,708
 ** Returned value:		None
 **
 ******************************************************************************/
+
+#define ARRAY_SIZE(x) (sizeof(x)/sizeof(x[0]))
+
+// A = la · B = si · C = do · D = re · E = mi · F = fa · G = sol
+
+#define NOTE_DO 6
+#define NOTE_RE 5
+#define NOTE_MI 4
+#define NOTE_FA 3
+#define NOTE_SOL 2
+#define NOTE_LA 1
+#define NOTE_SI 0
+#define NOTE_SILENCE -1
+
+static const uint16_t SinTable[45] =                                       
+{
+    410, 467, 523, 576, 627, 673, 714, 749, 778,
+    799, 813, 819, 817, 807, 789, 764, 732, 694, 
+    650, 602, 550, 495, 438, 381, 324, 270, 217,
+    169, 125, 87 , 55 , 30 , 12 , 2  , 0  , 6  ,   
+    20 , 41 , 70 , 105, 146, 193, 243, 297, 353
+};
+												//   si   la    sol   fa     mi    re   do
+												//   B     A     G     F      E    D    C
+static const float notes[]={2.02, 2.27, 2.55, 2.87, 3.03, 3.40, 3.82};
+
+static void next_sound_tick() {
+	static int ticks = 0;
+	LPC_DAC->DACR = SinTable[ticks++]<<6;
+	if (ticks == ARRAY_SIZE(SinTable))
+		ticks = 0;
+}
+
 void TIMER2_IRQHandler (void)
 {
-	static int ticks = 0;
-	LPC_DAC->DACR = (SinTab[ticks++]*volume/100)<<6;
-	if (ticks == 32)
-		ticks = 0;
 	LPC_TIM2->IR = 1;
   return;
 }
@@ -366,6 +395,9 @@ void TIMER2_IRQHandler (void)
 ** Returned value:		None
 **
 ******************************************************************************/
+
+
+
 void TIMER3_IRQHandler (void)
 {
   LPC_TIM3->IR = 1;			/* clear interrupt flag */

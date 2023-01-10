@@ -16,13 +16,20 @@ void ADC_init (void) {
 
   LPC_ADC->ADINTEN     =  (1<< 8);      /* global enable interrupt            */
 	
-	// startup speaker
-	LPC_PINCON->PINSEL1 |= (1<<21);
-	LPC_PINCON->PINSEL1 &= ~(1<<20);
-	LPC_GPIO0->FIODIR |= (1<<26);
   NVIC_EnableIRQ(ADC_IRQn);             /* enable ADC Interrupt               */
 }
 
 void ADC_start_conversion (void) {
 	LPC_ADC->ADCR |=  (1<<24);            /* Start A/D Conversion 				*/
 }				 
+void SetSpeaker(_Bool status) {
+	if (status) {
+		LPC_PINCON->PINSEL1 |= (1<<21);
+		LPC_PINCON->PINSEL1 &= ~(1<<20);
+		LPC_GPIO0->FIODIR |= (1<<26);
+	} else {
+		LPC_PINCON->PINSEL1 &= ~(1<<21);
+		LPC_PINCON->PINSEL1 |= (1<<20);
+		LPC_GPIO0->FIODIR &= ~(1<<26);
+	}
+}
