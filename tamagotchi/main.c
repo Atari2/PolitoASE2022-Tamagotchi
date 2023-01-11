@@ -80,23 +80,27 @@ void start_game() {
 	enable_RIT();
 	enable_timer(Timer0);
 	enable_timer(Timer1);
+	enable_timer(Timer2);
+	ADC_start_conversion();
 }
 
 int main(void)
 {	
 	float anim_timer = 1000 ms;
 	float frame_timer = 50 ms;
+	float sound_timer = 500 ms;
   SystemInit();  												/* System Initialization (i.e., PLL)  */
   LCD_Initialization();
 	TP_Init();
 	ADC_init();
-	// SetSpeaker(1);
+	SetSpeaker(1);
 	#ifndef SIMULATOR	// this is too slow to do every time
 	TouchPanel_Calibrate();
 	#endif
 	init_RIT(frame_timer, 1);
-	init_timer(Timer0, anim_timer, SCALE(1), 2);
-	init_timer(Timer1, frame_timer, SCALE(1), 3);
+	init_timer(Timer0, anim_timer, SCALE(1), 3);
+	init_timer(Timer1, frame_timer, SCALE(1), 4);
+	init_timer(Timer2, sound_timer, SCALE(1), 1);
 	joystick_init(JoySelect | JoyLeft | JoyRight);
 	reset_clicked = 1;
 	LPC_SC->PCON |= 0x1;									/* power-down	mode										*/

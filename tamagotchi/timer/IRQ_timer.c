@@ -30,6 +30,7 @@ volatile uint8_t full_bars_sat = tot_bars + 1;
 volatile _Bool start_food_animation = 0;
 volatile _Bool start_snack_animation = 0;
 volatile enum PlayerState player_state = Idle;
+volatile enum SoundType current_sound = S_None;
 static int32_t running_animation_frame_counter = 0;
 static int32_t eating_animation_frame_counter = 0;
 static int32_t cuddling_animation_frame_counter = 0;
@@ -107,6 +108,7 @@ void TIMER0_IRQHandler (void)
 			// bars empty, tamagotchi starts running
 			disable_RIT();
 			disable_timer(Timer0); 	// disable self
+			current_sound = S_Running;
 			player_state = Running;
 			LPC_TIM0->IR = 1;			// clear interrupt flag and return early
 			return;
@@ -273,8 +275,10 @@ void draw_eating_animation(uint32_t animation_counter) {
 void draw_cuddling_animation(uint32_t animation_counter) {
 	// TODO: add cuddling animation
 	const int8_t FRAME_TICKS = 8;
-	const int32_t total_anim_frames = 10;
+	const int32_t total_anim_frames = 5;
+	// duration = 50 ms * 8 * 5 = 2000 ms -> 2 seconds
 	_Bool done = 0;
+	
 	Coords center = {0, 0};
 	if (animation_counter % FRAME_TICKS == 0) {
 		center_rect_in_rect(&center, LCD_WIDTH / PX_RT, LCD_HEIGHT / PX_RT, IDLE_WIDTH, IDLE_HEIGHT);
@@ -399,19 +403,66 @@ static const uint16_t SinTable[45] =
     169, 125, 87 , 55 , 30 , 12 , 2  , 0  , 6  ,   
     20 , 41 , 70 , 105, 146, 193, 243, 297, 353
 };
+
+enum SoundNote {
+	N_Si = 0,
+	N_La = 1,
+	N_Sol = 2,
+	N_Fa = 3,
+	N_Mi = 4,
+	N_Re = 5,
+	N_Do = 6
+} typedef SoundNote;
 												//   si   la    sol   fa     mi    re   do
 												//   B     A     G     F      E    D    C
 static const float notes[]={2.02, 2.27, 2.55, 2.87, 3.03, 3.40, 3.82};
 
+static const uint8_t sounds[5][0xFF] = {
+	{0},		// silence
+	{N_Fa},		// click
+	{N_Sol, N_Fa, N_Re, N_Re, N_Mi, N_Si, N_Do, N_Mi, N_Sol, N_Mi, N_Do},		// running
+	{0},		// eating
+	{N_Do, N_La, N_Si, N_La, N_Si, N_Do}		// cuddling
+};
+
 static void next_sound_tick() {
 	static int ticks = 0;
-	LPC_DAC->DACR = SinTable[ticks++]<<6;
-	if (ticks == ARRAY_SIZE(SinTable))
+	LPC_DAC->DACR = (SinTable[ticks++]*volume/100)<<6;
+	if (ticks == ARRAY_SIZE(SinTable)) {
 		ticks = 0;
+	}
+}
+
+static void play_sound(SoundNote note) {
+	init_timer(Timer3, notes[note], SCALE(1), 2);
+	enable_timer(Timer3);
 }
 
 void TIMER2_IRQHandler (void)
 {
+	static const uint8_t note_qty[] = {
+		0,	// silence
+		1,  // click
+		11,  // running
+		0,  // eating
+		6,  // cuddling
+	};
+	static int cur_note = 0;
+	const int cur_sound_qty = note_qty[current_sound];
+	if (cur_sound_qty > 0) {
+		if (cur_note == cur_sound_qty) {
+			// at end of sound
+			disable_timer(Timer3);
+			reset_timer(Timer3);
+			cur_note = 0;
+			current_sound = S_None;
+		} else {
+			play_sound(sounds[current_sound][cur_note]);
+			cur_note++;
+		}
+	} else {
+		current_sound = S_None;
+	}
 	LPC_TIM2->IR = 1;
   return;
 }
@@ -430,6 +481,7 @@ void TIMER2_IRQHandler (void)
 
 void TIMER3_IRQHandler (void)
 {
+	next_sound_tick();
   LPC_TIM3->IR = 1;			/* clear interrupt flag */
   return;
 }

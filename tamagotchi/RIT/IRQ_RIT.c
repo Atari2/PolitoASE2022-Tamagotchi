@@ -30,6 +30,7 @@
 extern volatile _Bool start_food_animation;
 extern volatile _Bool start_snack_animation;
 extern volatile enum PlayerState player_state; 
+extern volatile enum SoundType current_sound;
 extern volatile _Bool reset_clicked;
 Coords player_coords = {0, 0};
 
@@ -69,10 +70,12 @@ void RIT_IRQHandler (void)
 				break;
 			case ButtonMeal:
 				start_food_animation = 1;
+				current_sound = S_Click;
 			  disable_RIT();
 				break;
 			case ButtonSnack:
 			  start_snack_animation = 1;
+			  current_sound = S_Click;
 			  disable_RIT();
 				break;
 			default:
@@ -88,6 +91,7 @@ void RIT_IRQHandler (void)
 		if (getDisplayPoint(&display, Read_Ads7846(), &matrix)) {
 			if (in_image_bounds()) {
 				player_state = Cuddling;
+				current_sound = S_Cuddling;
 				disable_RIT();
 			}
 		}

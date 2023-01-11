@@ -29,6 +29,13 @@ enum PlayerState {
 	Stopped = 3,
 	Cuddling = 4
 };
+enum SoundType {
+	S_None = 0,
+	S_Click = 1,
+	S_Running = 2,
+	S_Eating = 3,
+	S_Cuddling = 4
+};
 
 extern int init_timer( TimerNo timer_num, float millis, uint32_t prescale, uint32_t priority);
 extern int enable_timer( TimerNo timer_num );
