@@ -33,11 +33,6 @@
 
 #ifdef SIMULATOR
 extern uint8_t ScaleFlag; // <- ScaleFlag needs to visible in order for the emulator to find the symbol (can be placed also inside system_LPC17xx.h but since it is RO, it needs more work)
-#undef RGB565CONVERT
-#define RGB565CONVERT(red, green, blue)\
-(uint16_t)( (( red   >> 3 ) << 11 ) | \
-(( green >> 3 ) << 5  ) | \
-( blue  >> 3 ))
 #endif
 
 volatile _Bool reset_clicked = 0;
@@ -95,7 +90,7 @@ int main(void)
   LCD_Initialization();
 	TP_Init();
 	ADC_init();
-	SetSpeaker(1);
+	// SetSpeaker(1);
 	#ifndef SIMULATOR	// this is too slow to do every time
 	TouchPanel_Calibrate();
 	#endif

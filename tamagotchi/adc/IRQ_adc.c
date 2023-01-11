@@ -11,6 +11,8 @@
 #include "lpc17xx.h"
 #include "adc.h"
 #include "../GLCD/GLCD.h"
+#include "../images/imagedata.h"
+#include "../drawing/drawing.h"
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -23,17 +25,25 @@ unsigned short AD_last = 0xFF;     /* Last converted value               */
 int volume = 50;
 
 void ADC_IRQHandler(void) {
-  	
   AD_current = ((LPC_ADC->ADGDR>>4) & 0xFFF);/* Read Conversion Result             */
   if(AD_current != AD_last){
-		uint16_t diff = abs(AD_current - AD_last);
-		if (diff < 41) /* 41 == 1% */ {
-			return;
-		}
 		volume = AD_current*100 / 0xFFF;
-		char buf[10];
-		snprintf(buf, 10, "%3d %%", volume);
-		GUI_Text(5, 15, (uint8_t*)buf, Black, White);
+		Coords draw_coords = {5, 5};
+		set_scale(2);
+		const int max_vol = 100;
+		const int min_vol = 0;
+		const int one_third_vol = max_vol / 3;
+		const int two_thirds_vol = max_vol / 3 * 2;
+		if (volume == min_vol) {
+			draw_image(draw_coords, MUTE_WIDTH, MUTE_HEIGHT, muteMatrix);
+		} else if (volume < one_third_vol) {
+			draw_image(draw_coords, VOLUME1_WIDTH, VOLUME1_HEIGHT, volume1Matrix);
+		} else if (volume < two_thirds_vol) {
+			draw_image(draw_coords, VOLUME2_WIDTH, VOLUME2_HEIGHT, volume2Matrix);
+		} else {
+			draw_image(draw_coords, VOLUME3_WIDTH, VOLUME3_HEIGHT, volume3Matrix);
+		}
+		reset_scale();
 		AD_last = AD_current;
   }	
 }

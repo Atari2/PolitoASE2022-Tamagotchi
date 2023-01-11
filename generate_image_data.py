@@ -11,16 +11,21 @@ parser = argparse.ArgumentParser(description='Convert images to C arrays.')
 parser.add_argument('-b', '--board', action='store_true', help='Generate code for the board.', default=False)
 args = parser.parse_args()
 
+def round_to_white(v):
+    if v >= 240:
+        return 0xFF
+    return v
+
 def make_rgb_555(r, g, b):
-    r = ((r & 0xFF) >> 3)
-    g = ((g & 0xFF) >> 3)
-    b = ((b & 0xFF) >> 3)
+    r = ((round_to_white(r) & 0xFF) >> 3)
+    g = ((round_to_white(g) & 0xFF) >> 3)
+    b = ((round_to_white(b) & 0xFF) >> 3)
     return f'0x{((r << 11) | (g << 5) | b):04X}'
 
 def make_rgb_565(r, g, b):
-    r = ((r & 0xFF) >> 3)
-    g = ((g & 0xFF) >> 2)
-    b = ((b & 0xFF) >> 3)
+    r = ((round_to_white(r) & 0xFF) >> 3)
+    g = ((round_to_white(g) & 0xFF) >> 2)
+    b = ((round_to_white(b) & 0xFF) >> 3)
     return f'0x{((r << 11) | (g << 5) | b):04X}'
 
 with open('tamagotchi/images/imagedata.h', 'w') as h:

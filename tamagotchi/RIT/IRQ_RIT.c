@@ -88,10 +88,13 @@ void RIT_IRQHandler (void)
 		if (getDisplayPoint(&display, Read_Ads7846(), &matrix)) {
 			if (in_image_bounds()) {
 				player_state = Cuddling;
+				disable_RIT();
 			}
 		}
 	}
-	ADC_start_conversion();
+	if (player_state != Stopped) {
+		ADC_start_conversion();
+	}
 	
 	reset_RIT();
   LPC_RIT->RICTRL |= 0x1;	/* clear interrupt flag */

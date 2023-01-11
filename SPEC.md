@@ -9,18 +9,18 @@
     2. [x] Snack -> satisfies happiness **by one bar**
 - [x] If any of the bars are empty, the pet runs away (with basic animation), a message should be shown on screen, age counter stops and a RESET button replaces the COMMANDS at the bottom. Clicking RESET by using the joystick resets the game to the initial state.
 # Requirements (part 2)
-- [ ] Cuddles animation
-    1. [ ] Use touchscreen
-    2. [ ] last 2 seconds
-    3. [ ] only on the actual tamagotchi, increases happiness by one bar
+- [x] Cuddles animation
+    1. [x] Use touchscreen
+    2. [x] last 2 seconds
+    3. [x] only on the actual tamagotchi, increases happiness by one bar
 - [ ] Sound effects (simple sounds, nothing complex required)
     1. [ ] Click of the Meal/Snack option
     2. [ ] Eating animation
     3. [ ] Run animation
     4. [ ] Cuddles animation
-- [ ] Volume handling with potentiometer every 50 ms
-    1. [ ] Have a speaker icon with the volume level
-    2. [ ] When muted, use a different icon to signal the muting of the audio
+- [x] Volume handling with potentiometer every 50 ms
+    1. [x] Have a speaker icon with the volume level
+    2. [x] When muted, use a different icon to signal the muting of the audio
 
 
 # Application note

@@ -81,10 +81,17 @@
 * Return         : RGB ÑÕÉ«Öµ
 * Attention		 : None
 *******************************************************************************/
+#ifndef EMULATOR
 #define RGB565CONVERT(red, green, blue)\
 (uint16_t)( (( red   >> 3 ) << 11 ) | \
 (( green >> 2 ) << 5  ) | \
 ( blue  >> 3 ))
+#else
+#define RGB565CONVERT(red, green, blue)\
+(uint16_t)( (( red   >> 3 ) << 11 ) | \
+(( green >> 3 ) << 5  ) | \
+( blue  >> 3 ))
+#endif
 
 /* Private function prototypes -----------------------------------------------*/
 void LCD_Initialization(void);

@@ -32,6 +32,7 @@ volatile _Bool start_snack_animation = 0;
 volatile enum PlayerState player_state = Idle;
 static int32_t running_animation_frame_counter = 0;
 static int32_t eating_animation_frame_counter = 0;
+static int32_t cuddling_animation_frame_counter = 0;
 static uint32_t generic_animation_counter = 0;
 extern Coords player_coords;
 extern int volume;
@@ -47,6 +48,7 @@ void reset_global_timer_state() {
 	player_state = Idle;
 	running_animation_frame_counter = 0;
 	eating_animation_frame_counter = 0;
+	cuddling_animation_frame_counter = 0;
 	generic_animation_counter = 0;
 }
 
@@ -270,7 +272,35 @@ void draw_eating_animation(uint32_t animation_counter) {
 
 void draw_cuddling_animation(uint32_t animation_counter) {
 	// TODO: add cuddling animation
-
+	const int8_t FRAME_TICKS = 8;
+	const int32_t total_anim_frames = 10;
+	_Bool done = 0;
+	Coords center = {0, 0};
+	if (animation_counter % FRAME_TICKS == 0) {
+		center_rect_in_rect(&center, LCD_WIDTH / PX_RT, LCD_HEIGHT / PX_RT, IDLE_WIDTH, IDLE_HEIGHT);
+		if (cuddling_animation_frame_counter == 0) {
+			draw_image(center, TOUCHED1_WIDTH, TOUCHED1_HEIGHT, touched1Matrix);
+		} else if (cuddling_animation_frame_counter & 1) {
+			draw_image(center, TOUCHED2_WIDTH, TOUCHED2_HEIGHT, touched2Matrix);
+		} else {
+			draw_image(center, TOUCHED3_WIDTH, TOUCHED3_HEIGHT, touched3Matrix);
+		}
+		++cuddling_animation_frame_counter;
+		if (cuddling_animation_frame_counter == total_anim_frames) {
+			done = 1;
+		}
+	}
+	if (done) {
+		full_bars_happ++;
+		if (full_bars_happ > tot_bars) {
+			full_bars_happ = tot_bars;
+		} else {
+			draw_single_bar(full_bars_happ - 1, 0, 1); 
+		}
+		player_state = Idle;
+		cuddling_animation_frame_counter = 0;
+		enable_RIT();
+	}
 }
 
 void handle_joystick_input() {

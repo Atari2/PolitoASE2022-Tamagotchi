@@ -5,6 +5,14 @@
 #include "drawing.h"
 
 volatile _Bool drawing = 0;
+volatile uint8_t PX_RT = 4;
+
+void set_scale(uint8_t scale) {
+	PX_RT = scale;
+}
+void reset_scale(void) {
+	PX_RT = 4;
+}
 
 // this function only handles either straight vertical or straight horizontal lines
 // it also assumes that x1 < x2 and y1 < y2
