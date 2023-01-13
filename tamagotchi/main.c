@@ -88,15 +88,15 @@ int main(void)
 {	
 	float anim_timer = 1000 ms;
 	float frame_timer = 50 ms;
-	float sound_timer = 500 ms;
+	float sound_timer = 50 ms;		// start up checking for sounds every 50 ms
   SystemInit();  												/* System Initialization (i.e., PLL)  */
   LCD_Initialization();
 	TP_Init();
 	ADC_init();
 	SetSpeaker(1);
-	#ifndef SIMULATOR	// this is too slow to do every time
+	// #ifndef SIMULATOR	// this is too slow to do every time
 	TouchPanel_Calibrate();
-	#endif
+	// #endif
 	init_RIT(frame_timer, 1);
 	init_timer(Timer0, anim_timer, SCALE(1), 3);
 	init_timer(Timer1, frame_timer, SCALE(1), 4);

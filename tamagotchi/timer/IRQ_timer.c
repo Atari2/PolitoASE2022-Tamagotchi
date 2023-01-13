@@ -130,7 +130,7 @@ void draw_running_animation(uint32_t animation_counter) {
 	const int8_t FRAME_TICKS = 8;
 	const int32_t disl_base = 8;
 	const int32_t disl = disl_base * PX_RT;
-	const uint16_t boxBgColor = 0xfa83;
+	const uint16_t boxBgColor = RGB565CONVERT(0xFF, 0xA5, 0x00);
 	uint16_t width = RUNNING1_WIDTH;
 	uint16_t height = RUNNING1_HEIGHT;
 	const char stoppedTxt[] = "Mario ran away :(";
@@ -384,17 +384,6 @@ void TIMER1_IRQHandler (void)
 
 #define ARRAY_SIZE(x) (sizeof(x)/sizeof(x[0]))
 
-// A = la · B = si · C = do · D = re · E = mi · F = fa · G = sol
-
-#define NOTE_DO 6
-#define NOTE_RE 5
-#define NOTE_MI 4
-#define NOTE_FA 3
-#define NOTE_SOL 2
-#define NOTE_LA 1
-#define NOTE_SI 0
-#define NOTE_SILENCE -1
-
 static const uint16_t SinTable[45] =                                       
 {
     410, 467, 523, 576, 627, 673, 714, 749, 778,
@@ -404,60 +393,126 @@ static const uint16_t SinTable[45] =
     20 , 41 , 70 , 105, 146, 193, 243, 297, 353
 };
 
-enum SoundNote {
+enum {
+	N_None = -1,
 	N_Si = 0,
 	N_La = 1,
 	N_Sol = 2,
 	N_Fa = 3,
 	N_Mi = 4,
 	N_Re = 5,
-	N_Do = 6
-} typedef SoundNote;
+	N_Do = 6,
+	N_B = N_Si,
+	N_A = N_La,
+	N_G = N_Sol,
+	N_F = N_Fa,
+	N_E = N_Mi,
+	N_D = N_Re,
+	N_C = N_Do
+} typedef NoteName;
+
+enum {
+	L_1,
+	L_2,
+	L_4,
+	L_8,
+	L_16,
+	L_32,
+	L_64
+} typedef NoteLen;
 												//   si   la    sol   fa     mi    re   do
 												//   B     A     G     F      E    D    C
 static const float notes[]={2.02, 2.27, 2.55, 2.87, 3.03, 3.40, 3.82};
 
-static const uint8_t sounds[5][0xFF] = {
-	{0},		// silence
-	{N_Fa},		// click
-	{N_Sol, N_Fa, N_Re, N_Re, N_Mi, N_Si, N_Do, N_Mi, N_Sol, N_Mi, N_Do},		// running
-	{0},		// eating
-	{N_Do, N_La, N_Si, N_La, N_Si, N_Do}		// cuddling
-};
+struct Note {
+	NoteName value;
+	NoteLen length;				// 0 = whole note, 1 = half note, 2 = 1/4th note, 3 = 1/8th note, 4 = 1/16th note, 5 = 1/32nd note, 6 = 1/64th note
+} typedef Note;
 
-static void next_sound_tick() {
-	static int ticks = 0;
-	LPC_DAC->DACR = (SinTable[ticks++]*volume/100)<<6;
-	if (ticks == ARRAY_SIZE(SinTable)) {
-		ticks = 0;
+struct Sound {
+	const uint8_t length;
+	const uint16_t bpm;
+	const Note notes[0xFF];
+} typedef Sound;
+
+// returns milliseconds
+static float note_len_from_sound(const Sound* s, Note note) {
+	const float quarter_note_duration = 1000.0f / ((float)s->bpm / 60.0f);
+	switch (note.length) {
+		case L_1:
+			return quarter_note_duration * 4;
+		case L_2:
+			return quarter_note_duration * 2;
+		case L_4:
+			return quarter_note_duration;
+		case L_8:
+			return quarter_note_duration / 2;
+		case L_16:
+			return quarter_note_duration / 4;
+		case L_32:
+			return quarter_note_duration / 8;
+		case L_64:
+			return quarter_note_duration / 16;
+		default:
+			return quarter_note_duration;
 	}
 }
 
-static void play_sound(SoundNote note) {
-	init_timer(Timer3, notes[note], SCALE(1), 2);
-	enable_timer(Timer3);
+static const Sound sounds[5] = {
+	{0, 0, {{N_None, L_4}}},		// silence
+	{1, 120, {{N_Fa, L_4}}},		// click
+	{14, 100, {{N_B, L_16}, {N_None, L_64}, {N_F, L_32}, {N_None, L_64}, {N_None, L_16}, {N_F, L_16}, {N_F, L_8}, {N_E, L_8}, {N_D, L_8}, {N_C, L_16}, {N_E, L_16}, {N_G, L_16}, {N_E, L_16}, {N_C, L_4}}},		// running
+	{0, 0, {{N_None, L_4}}},		// eating
+	{6, 120, {{N_Do, L_4}, {N_Fa, L_4}, {N_Si, L_4}, {N_Fa, L_4}, {N_Si, L_4}, {N_Do, L_4}}}		// cuddling
+};
+
+static volatile uint8_t current_tick = 0;
+static void set_dacr_value(uint16_t v) {
+	const uint32_t bit_mask = ~(0x3ff << 6);
+	v = (v*volume)/100;								// adjust according to current volume
+	uint32_t sv = v & 0x3ff;		// select 10 lowest bits;				
+  uint32_t ov = LPC_DAC->DACR;	
+	LPC_DAC->DACR = (ov & bit_mask) | (sv << 6);  		  // shift by 6 because DACR uses bits 6..15 for the value, rest is reserved
+}
+static void next_sound_tick() {
+	set_dacr_value(SinTable[current_tick++]);
+	if (current_tick == ARRAY_SIZE(SinTable)) {
+		current_tick = 0;
+	}
+}
+
+static void play_sound(const Sound* s, Note note) {
+	reset_timer(Timer2);
+	disable_timer(Timer2);
+	init_timer(Timer2, note_len_from_sound(s, note), SCALE(1), 1);
+	enable_timer(Timer2);
+	if (note.value != N_None) {
+		init_timer(Timer3, notes[note.value], SCALE(1), 2);
+		enable_timer(Timer3);
+	} else {
+		set_dacr_value(0);
+	}
 }
 
 void TIMER2_IRQHandler (void)
 {
-	static const uint8_t note_qty[] = {
-		0,	// silence
-		1,  // click
-		11,  // running
-		0,  // eating
-		6,  // cuddling
-	};
 	static int cur_note = 0;
-	const int cur_sound_qty = note_qty[current_sound];
-	if (cur_sound_qty > 0) {
-		if (cur_note == cur_sound_qty) {
+	const Sound* cur_sound = &sounds[current_sound];
+	current_tick = 0; 		// reset ticks since we're playing a new sound
+	if (cur_sound->length > 0) {
+		if (cur_note == cur_sound->length) {
 			// at end of sound
 			disable_timer(Timer3);
 			reset_timer(Timer3);
+			set_dacr_value(0);
 			cur_note = 0;
 			current_sound = S_None;
 		} else {
-			play_sound(sounds[current_sound][cur_note]);
+			if (cur_note > 0) {
+				disable_timer(Timer3);
+				reset_timer(Timer3);
+			}
+			play_sound(cur_sound, cur_sound->notes[cur_note]);
 			cur_note++;
 		}
 	} else {
