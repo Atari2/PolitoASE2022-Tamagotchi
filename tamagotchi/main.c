@@ -94,9 +94,7 @@ int main(void)
 	TP_Init();
 	ADC_init();
 	SetSpeaker(1);
-	// #ifndef SIMULATOR	// this is too slow to do every time
 	TouchPanel_Calibrate();
-	// #endif
 	init_RIT(frame_timer, 1);
 	init_timer(Timer0, anim_timer, SCALE(1), 3);
 	init_timer(Timer1, frame_timer, SCALE(1), 4);

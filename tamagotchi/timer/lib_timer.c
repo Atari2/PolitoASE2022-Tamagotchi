@@ -123,6 +123,59 @@ int reset_timer( TimerNo timer_num )
 }
 
 #define ARRLEN(arr) (sizeof(arr)/sizeof(arr[0]))
+	
+void power_timer(TimerNo timer_num) {
+	switch (timer_num) {
+		case Timer2:
+			LPC_SC->PCONP |= (1<<22);
+			break;
+		case Timer3:
+			LPC_SC->PCONP |= (1<<23);
+			break;
+		default:
+		case Timer0:
+		case Timer1:
+			break;
+	}
+}
+
+int init_timer_k(TimerNo timer_num, uint32_t TimerInterval, uint32_t prescale, uint32_t priority) {
+	uint32_t MCR0 = 3, MCR1 = 3, MCR2 = 3, MCR3 = 3;
+	static const enum IRQn TimerIRQ[] = {TIMER0_IRQn, TIMER1_IRQn, TIMER2_IRQn, TIMER3_IRQn};
+	if ((int)timer_num >= ARRLEN(TimerIRQ)) {
+		return -1; 		// invalid timer number
+	}
+	switch (timer_num) {
+		case Timer0:
+			LPC_TIM0->MR0 = TimerInterval;
+		  LPC_TIM0->MCR = MCR0;
+			LPC_TIM0->PR = prescale;
+			break;
+		case Timer1:
+			LPC_TIM1->MR0 = TimerInterval;
+		  LPC_TIM1->MCR = MCR1;
+		  LPC_TIM1->PR = prescale;
+			break;
+		case Timer2:
+			LPC_SC->PCONP |= (1<<22);
+			LPC_TIM2->MR0 = TimerInterval;
+		  LPC_TIM2->MCR = MCR2;
+		  LPC_TIM2->PR = prescale;
+			break;
+		case Timer3:
+			LPC_SC->PCONP |= (1<<23);
+			LPC_TIM3->MR0 = TimerInterval;
+			LPC_TIM3->MCR = MCR3;
+		  LPC_TIM3->PR = prescale;
+			break;
+		default:
+			break;
+	}
+	NVIC_EnableIRQ(TimerIRQ[timer_num]);
+	NVIC_SetPriority(TimerIRQ[timer_num], priority);
+  return 0;
+
+}
 
 int init_timer( TimerNo timer_num, float millis, uint32_t prescale,  uint32_t priority)
 {

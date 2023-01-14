@@ -37,7 +37,9 @@ enum SoundType {
 	S_Cuddling = 4
 };
 
+extern void power_timer(TimerNo timer_num);
 extern int init_timer( TimerNo timer_num, float millis, uint32_t prescale, uint32_t priority);
+extern int init_timer_k(TimerNo timer_num, uint32_t TimerInterval, uint32_t prescale, uint32_t priority);
 extern int enable_timer( TimerNo timer_num );
 extern int disable_timer( TimerNo timer_num );
 extern int reset_timer( TimerNo timer_num );

@@ -395,21 +395,21 @@ static const uint16_t SinTable[45] =
 
 enum {
 	N_None = -1,
-	N_Si = 0,
-	N_La = 1,
-	N_Sol = 2,
-	N_Fa = 3,
-	N_Mi = 4,
-	N_Re = 5,
-	N_Do = 6,
-	N_B = N_Si,
-	N_A = N_La,
-	N_G = N_Sol,
-	N_F = N_Fa,
-	N_E = N_Mi,
+  N_Do = 261,
+	N_Re = 293,
+	N_Mi = 329,
+	N_Fa = 349,
+	N_Sol = 392,
+	N_La = 440,
+	N_Si = 493,
+	N_C = N_Do,
 	N_D = N_Re,
-	N_C = N_Do
-} typedef NoteName;
+	N_E = N_Mi,
+	N_F = N_Fa,
+	N_G = N_Sol,
+	N_A = N_La,
+	N_B = N_Si
+} typedef NoteFrequency;
 
 enum {
 	L_1,
@@ -420,12 +420,13 @@ enum {
 	L_32,
 	L_64
 } typedef NoteLen;
-												//   si   la    sol   fa     mi    re   do
-												//   B     A     G     F      E    D    C
-static const float notes[]={2.02, 2.27, 2.55, 2.87, 3.03, 3.40, 3.82};
+
+static uint32_t note_to_k(uint32_t hz) {
+	return 25000000 / (hz * ARRAY_SIZE(SinTable));
+}
 
 struct Note {
-	NoteName value;
+	NoteFrequency freq;
 	NoteLen length;				// 0 = whole note, 1 = half note, 2 = 1/4th note, 3 = 1/8th note, 4 = 1/16th note, 5 = 1/32nd note, 6 = 1/64th note
 } typedef Note;
 
@@ -470,7 +471,7 @@ static volatile uint8_t current_tick = 0;
 static void set_dacr_value(uint16_t v) {
 	const uint32_t bit_mask = ~(0x3ff << 6);
 	v = (v*volume)/100;								// adjust according to current volume
-	uint32_t sv = v & 0x3ff;		// select 10 lowest bits;				
+	uint32_t sv = v & 0x3ff;					// select 10 lowest bits;				
   uint32_t ov = LPC_DAC->DACR;	
 	LPC_DAC->DACR = (ov & bit_mask) | (sv << 6);  		  // shift by 6 because DACR uses bits 6..15 for the value, rest is reserved
 }
@@ -480,17 +481,14 @@ static void next_sound_tick() {
 		current_tick = 0;
 	}
 }
-
 static void play_sound(const Sound* s, Note note) {
 	reset_timer(Timer2);
-	disable_timer(Timer2);
 	init_timer(Timer2, note_len_from_sound(s, note), SCALE(1), 1);
 	enable_timer(Timer2);
-	if (note.value != N_None) {
-		init_timer(Timer3, notes[note.value], SCALE(1), 2);
+	if (note.freq != N_None) {
+		reset_timer(Timer3);
+		init_timer_k(Timer3, note_to_k(note.freq), SCALE(1), 2);
 		enable_timer(Timer3);
-	} else {
-		set_dacr_value(0);
 	}
 }
 
@@ -500,18 +498,18 @@ void TIMER2_IRQHandler (void)
 	const Sound* cur_sound = &sounds[current_sound];
 	current_tick = 0; 		// reset ticks since we're playing a new sound
 	if (cur_sound->length > 0) {
-		if (cur_note == cur_sound->length) {
-			// at end of sound
+		if (cur_note > 0) {
 			disable_timer(Timer3);
 			reset_timer(Timer3);
-			set_dacr_value(0);
+		}
+		if (cur_note == cur_sound->length) {
+			// at end of sound			
 			cur_note = 0;
 			current_sound = S_None;
+			reset_timer(Timer2);
+			init_timer(Timer2, 50 ms, SCALE(1), 1);
+			enable_timer(Timer2);
 		} else {
-			if (cur_note > 0) {
-				disable_timer(Timer3);
-				reset_timer(Timer3);
-			}
 			play_sound(cur_sound, cur_sound->notes[cur_note]);
 			cur_note++;
 		}
