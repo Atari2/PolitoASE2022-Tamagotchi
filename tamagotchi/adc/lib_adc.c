@@ -21,13 +21,13 @@ void ADC_init (void) {
 
 void ADC_start_conversion (void) {
 	LPC_ADC->ADCR |=  (1<<24);            /* Start A/D Conversion 				*/
-	LPC_DAC->DACR = 0;			// set bias bit to 0
 }				 
 void SetSpeaker(_Bool status) {
 	if (status) {
 		LPC_PINCON->PINSEL1 |= (1<<21);
 		LPC_PINCON->PINSEL1 &= ~(1<<20);
 		LPC_GPIO0->FIODIR |= (1<<26);
+		LPC_DAC->DACR = 0;			// set bias bit to 0
 	} else {
 		LPC_PINCON->PINSEL1 &= ~(1<<21);
 		LPC_PINCON->PINSEL1 |= (1<<20);

@@ -24,15 +24,7 @@ unsigned short AD_current;
 unsigned short AD_last = 0xFF;     /* Last converted value               */
 int32_t volume = 0;
 
-void ADC_IRQHandler(void) {
-  AD_current = ((LPC_ADC->ADGDR>>4) & 0xFFF);/* Read Conversion Result             */
-  if(AD_current != AD_last){
-		int32_t new_volume = AD_current * 100 / 0xFFF;
-		if (abs(new_volume - volume) <= 1) {
-			AD_last = AD_current;
-			return;
-		}
-		volume = new_volume;
+void draw_volume(void) {
 		Coords draw_coords = {5, 5};
 		set_scale(2);
 		const int max_vol = 100;
@@ -53,6 +45,18 @@ void ADC_IRQHandler(void) {
 			draw_image(draw_coords, VOLUME3_WIDTH, VOLUME3_HEIGHT, volume3Matrix);
 		}
 		reset_scale();
+}
+
+void ADC_IRQHandler(void) {
+  AD_current = ((LPC_ADC->ADGDR>>4) & 0xFFF);/* Read Conversion Result             */
+  if(AD_current != AD_last){
+		int32_t new_volume = AD_current * 100 / 0xFFF;
+		if (abs(new_volume - volume) <= 1) {
+			AD_last = AD_current;
+			return;
+		}
+		volume = new_volume;
+		draw_volume();
 		AD_last = AD_current;
   }	
 }

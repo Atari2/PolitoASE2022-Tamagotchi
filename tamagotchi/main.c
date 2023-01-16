@@ -46,7 +46,8 @@ void start_game() {
 	const char satTxt[] = "Satiety";
 	const uint16_t bgColor = RGB565CONVERT(0xFF, 0xA5, 0x00);					// orange
 	LCD_Clear(White);
-
+	
+	draw_volume();
 	// draw top
 	text_origin.x = 0;
 	text_origin.y = 30;
