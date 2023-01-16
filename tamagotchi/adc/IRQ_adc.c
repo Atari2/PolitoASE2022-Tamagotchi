@@ -22,7 +22,7 @@
 
 unsigned short AD_current;   
 unsigned short AD_last = 0xFF;     /* Last converted value               */
-int volume = 0;
+uint32_t volume = 0;
 
 void ADC_IRQHandler(void) {
   AD_current = ((LPC_ADC->ADGDR>>4) & 0xFFF);/* Read Conversion Result             */

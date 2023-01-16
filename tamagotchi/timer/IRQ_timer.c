@@ -14,6 +14,7 @@
 #include "../images/imagedata.h"
 #include "../RIT/RIT.h"
 #include "../adc/adc.h"
+#include "../sound/libsound.h"
 #include <stdlib.h>
 #include <stdio.h>
 
@@ -213,6 +214,7 @@ void draw_eating_animation(uint32_t animation_counter) {
 				draw_image(center, width, height, running2Matrix);
 				break;
 			case 3:
+				current_sound = S_Eating;
 				center_rect_in_rect(&center, (LCD_WIDTH - (3 * disl)) / PX_RT, LCD_HEIGHT / PX_RT, width, height);
 				draw_image(center, width, height, crouchedMatrix);
 				break;
@@ -273,7 +275,6 @@ void draw_eating_animation(uint32_t animation_counter) {
 }
 
 void draw_cuddling_animation(uint32_t animation_counter) {
-	// TODO: add cuddling animation
 	const int8_t FRAME_TICKS = 8;
 	const int32_t total_anim_frames = 5;
 	// duration = 50 ms * 8 * 5 = 2000 ms -> 2 seconds
@@ -370,29 +371,9 @@ void TIMER1_IRQHandler (void)
   LPC_TIM1->IR = 1;			/* clear interrupt flag */
   return;
 }
-
-
-/******************************************************************************
-** Function name:		Timer1_IRQHandler
-**
-** Descriptions:		Timer/Counter 1 interrupt handler
-**
-** parameters:			None
-** Returned value:		None
-**
-******************************************************************************/
-
+/*
 #define ARRAY_SIZE(x) (sizeof(x)/sizeof(x[0]))
-
-static const uint16_t SinTable[45] =                                       
-{
-    410, 467, 523, 576, 627, 673, 714, 749, 778,
-    799, 813, 819, 817, 807, 789, 764, 732, 694, 
-    650, 602, 550, 495, 438, 381, 324, 270, 217,
-    169, 125, 87 , 55 , 30 , 12 , 2  , 0  , 6  ,   
-    20 , 41 , 70 , 105, 146, 193, 243, 297, 353
-};
-
+	
 enum {
 	N_None = -1,
   N_Do = 261,
@@ -421,24 +402,34 @@ enum {
 	L_64
 } typedef NoteLen;
 
-static uint32_t note_to_k(uint32_t hz) {
-	return 25000000 / (hz * ARRAY_SIZE(SinTable));
-}
-
 struct Note {
 	NoteFrequency freq;
-	NoteLen length;				// 0 = whole note, 1 = half note, 2 = 1/4th note, 3 = 1/8th note, 4 = 1/16th note, 5 = 1/32nd note, 6 = 1/64th note
+	NoteLen length;
 } typedef Note;
 
 struct Sound {
 	const uint8_t length;
-	const uint16_t bpm;
+	const uint8_t bpm;
 	const Note notes[0xFF];
 } typedef Sound;
 
+static const uint16_t SinTable[45] =                                       
+{
+    410, 467, 523, 576, 627, 673, 714, 749, 778,
+    799, 813, 819, 817, 807, 789, 764, 732, 694, 
+    650, 602, 550, 495, 438, 381, 324, 270, 217,
+    169, 125, 87 , 55 , 30 , 12 , 2  , 0  , 6  ,   
+    20 , 41 , 70 , 105, 146, 193, 243, 297, 353
+};
+
+
+static uint32_t note_to_k(uint32_t hz) {
+	return 25000000 / (hz * ARRAY_SIZE(SinTable));
+}
+
 // returns milliseconds
-static float note_len_from_sound(const Sound* s, Note note) {
-	const float quarter_note_duration = 1000.0f / ((float)s->bpm / 60.0f);
+static float note_len_from_sound(uint8_t bpm, Note note) {
+	const float quarter_note_duration = 1000.0f / ((float)bpm / 60.0f);
 	switch (note.length) {
 		case L_1:
 			return quarter_note_duration * 4;
@@ -459,15 +450,6 @@ static float note_len_from_sound(const Sound* s, Note note) {
 	}
 }
 
-static const Sound sounds[5] = {
-	{0, 0, {{N_None, L_4}}},		// silence
-	{1, 120, {{N_Fa, L_4}}},		// click
-	{14, 100, {{N_B, L_16}, {N_None, L_64}, {N_F, L_32}, {N_None, L_64}, {N_None, L_16}, {N_F, L_16}, {N_F, L_8}, {N_E, L_8}, {N_D, L_8}, {N_C, L_16}, {N_E, L_16}, {N_G, L_16}, {N_E, L_16}, {N_C, L_4}}},		// running
-	{0, 0, {{N_None, L_4}}},		// eating
-	{6, 120, {{N_Do, L_4}, {N_Fa, L_4}, {N_Si, L_4}, {N_Fa, L_4}, {N_Si, L_4}, {N_Do, L_4}}}		// cuddling
-};
-
-static volatile uint8_t current_tick = 0;
 static void set_dacr_value(uint16_t v) {
 	const uint32_t bit_mask = ~(0x3ff << 6);
 	v = (v*volume)/100;								// adjust according to current volume
@@ -475,15 +457,17 @@ static void set_dacr_value(uint16_t v) {
   uint32_t ov = LPC_DAC->DACR;	
 	LPC_DAC->DACR = (ov & bit_mask) | (sv << 6);  		  // shift by 6 because DACR uses bits 6..15 for the value, rest is reserved
 }
-static void next_sound_tick() {
+
+static void next_sound_tick(void) {
+	static uint8_t current_tick = 0;
 	set_dacr_value(SinTable[current_tick++]);
 	if (current_tick == ARRAY_SIZE(SinTable)) {
 		current_tick = 0;
 	}
 }
-static void play_sound(const Sound* s, Note note) {
+static void play_note(uint8_t bpm, Note note) {
 	reset_timer(Timer2);
-	init_timer(Timer2, note_len_from_sound(s, note), SCALE(1), 1);
+	init_timer(Timer2, note_len_from_sound(bpm, note), SCALE(1), 1);
 	enable_timer(Timer2);
 	if (note.freq != N_None) {
 		reset_timer(Timer3);
@@ -491,18 +475,14 @@ static void play_sound(const Sound* s, Note note) {
 		enable_timer(Timer3);
 	}
 }
-
-void TIMER2_IRQHandler (void)
-{
+static void play_sound(const Sound* s) {
 	static int cur_note = 0;
-	const Sound* cur_sound = &sounds[current_sound];
-	current_tick = 0; 		// reset ticks since we're playing a new sound
-	if (cur_sound->length > 0) {
+	if (s->length > 0) {
 		if (cur_note > 0) {
 			disable_timer(Timer3);
 			reset_timer(Timer3);
 		}
-		if (cur_note == cur_sound->length) {
+		if (cur_note == s->length) {
 			// at end of sound			
 			cur_note = 0;
 			current_sound = S_None;
@@ -510,10 +490,36 @@ void TIMER2_IRQHandler (void)
 			init_timer(Timer2, 50 ms, SCALE(1), 1);
 			enable_timer(Timer2);
 		} else {
-			play_sound(cur_sound, cur_sound->notes[cur_note]);
+			play_note(s->bpm, s->notes[cur_note]);
 			cur_note++;
 		}
 	} else {
+		current_sound = S_None;
+	}
+}
+*/
+
+/******************************************************************************
+** Function name:		Timer1_IRQHandler
+**
+** Descriptions:		Timer/Counter 1 interrupt handler
+**
+** parameters:			None
+** Returned value:		None
+**
+******************************************************************************/
+
+const Sound sounds[5] = {
+	{0, 0, {{N_None, L_4}}},		// silence
+	{3, 120, {{N_Fa, L_16}, {N_None, L_32}, {N_Do, L_16}}},		// click
+	{14, 100, {{N_B, L_16}, {N_None, L_64}, {N_F, L_32}, {N_None, L_64}, {N_None, L_16}, {N_F, L_16}, {N_F, L_8}, {N_E, L_8}, {N_D, L_8}, {N_C, L_16}, {N_E, L_16}, {N_G, L_16}, {N_E, L_16}, {N_C, L_4}}},		// running
+	{11, 180, {{N_E, L_8}, {N_E, L_8}, {N_None, L_8}, {N_E, L_8}, {N_None, L_8}, {N_C, L_8}, {N_E, L_4}, {N_G, L_4}, {N_None, L_4}, {N_G, L_4}, {N_None, L_4}}},		// eating
+	{11, 200, {{N_D, L_16}, {N_G, L_16}, {N_B, L_16}, {N_None, L_8}, {N_E, L_16}, {N_A, L_16}, {N_C, L_16}, {N_None, L_8}, {N_F, L_16}, {N_B, L_16}, {N_D, L_16}}}
+};
+
+void TIMER2_IRQHandler (void)
+{
+	if (play_sound(&sounds[current_sound])) {
 		current_sound = S_None;
 	}
 	LPC_TIM2->IR = 1;

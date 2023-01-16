@@ -29,7 +29,7 @@
 #include "TouchPanel/TouchPanel.h"
 #include "adc/adc.h"
 #include "timer/timer.h"
-#include <stdlib.h>
+#include "sound/libsound.h"
 
 #ifdef SIMULATOR
 extern uint8_t ScaleFlag; // <- ScaleFlag needs to visible in order for the emulator to find the symbol (can be placed also inside system_LPC17xx.h but since it is RO, it needs more work)
@@ -80,7 +80,7 @@ void start_game() {
 	enable_RIT();
 	enable_timer(Timer0);
 	enable_timer(Timer1);
-	enable_timer(Timer2);
+	init_sound_system();
 	ADC_start_conversion();
 }
 
@@ -88,7 +88,6 @@ int main(void)
 {	
 	float anim_timer = 1000 ms;
 	float frame_timer = 50 ms;
-	float sound_timer = 50 ms;		// start up checking for sounds every 50 ms
   SystemInit();  												/* System Initialization (i.e., PLL)  */
   LCD_Initialization();
 	TP_Init();
@@ -98,7 +97,7 @@ int main(void)
 	init_RIT(frame_timer, 1);
 	init_timer(Timer0, anim_timer, SCALE(1), 3);
 	init_timer(Timer1, frame_timer, SCALE(1), 4);
-	init_timer(Timer2, sound_timer, SCALE(1), 1);
+	power_timer(Timer3);
 	joystick_init(JoySelect | JoyLeft | JoyRight);
 	reset_clicked = 1;
 	LPC_SC->PCON |= 0x1;									/* power-down	mode										*/

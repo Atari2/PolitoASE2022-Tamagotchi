@@ -21,6 +21,7 @@ void ADC_init (void) {
 
 void ADC_start_conversion (void) {
 	LPC_ADC->ADCR |=  (1<<24);            /* Start A/D Conversion 				*/
+	LPC_DAC->DACR = 0;			// set bias bit to 0
 }				 
 void SetSpeaker(_Bool status) {
 	if (status) {
