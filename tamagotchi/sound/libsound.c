@@ -15,7 +15,11 @@ static const int16_t SinTableAdjusted[45] = {
 static const int32_t HALF_POINT_SIN = 512;
 
 static uint32_t note_to_k(uint32_t hz) {
+#ifndef SIMULATOR
 	return 25000000 / (hz * ARRAY_SIZE(SinTableAdjusted));
+#else
+	return 25000000 / (hz * 10);
+#endif
 }
 
 // returns milliseconds
