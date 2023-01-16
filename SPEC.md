@@ -13,11 +13,11 @@
     1. [x] Use touchscreen
     2. [x] last 2 seconds
     3. [x] only on the actual tamagotchi, increases happiness by one bar
-- [ ] Sound effects (simple sounds, nothing complex required)
-    1. [ ] Click of the Meal/Snack option
-    2. [ ] Eating animation
-    3. [ ] Run animation
-    4. [ ] Cuddles animation
+- [x] Sound effects (simple sounds, nothing complex required)
+    1. [x] Click of the Meal/Snack option
+    2. [x] Eating animation
+    3. [x] Run animation
+    4. [x] Cuddles animation
 - [x] Volume handling with potentiometer every 50 ms
     1. [x] Have a speaker icon with the volume level
     2. [x] When muted, use a different icon to signal the muting of the audio
