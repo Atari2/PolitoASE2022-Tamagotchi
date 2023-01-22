@@ -4,3 +4,5 @@
 *.uvguix.*
 Objects/
 Listings/
+*.pdf
+*.zip
